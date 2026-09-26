@@ -1,0 +1,85 @@
+# The Claude builder, shared by every project (see claude/SETUP.md).
+#
+# A project calls this from a small stub (claude/project-stub.yml). Someone with
+# write access writes `@claude …` in an issue or PR comment, or opens an issue
+# mentioning it, and a builder runs on a GitHub Actions runner: it reads the
+# project's CLAUDE.md plus this repo's AGENTS.md and CONVENTIONS.md, works on a
+# `claude/…` branch (or the PR's own branch), and reports on the issue or PR.
+# It cannot push to main, merge, or edit workflow files — by the action's design.
+name: claude-builder
+
+on:
+  workflow_call:
+    inputs:
+      setup:
+        description: 'Shell run before the builder starts, e.g. "npm ci && npx playwright install --with-deps chromium". Empty = nothing.'
+        type: string
+        default: ''
+      node-version:
+        description: 'Node version for actions/setup-node; empty = skip.'
+        type: string
+        default: ''
+      model:
+        type: string
+        default: claude-opus-5-5
+      max-turns:
+        type: number
+        default: 400
+      timeout-minutes:
+        type: number
+        default: 360
+      readers:
+        description: 'Whose comments the builder reads (prompt-injection guard on public repos).'
+        type: string
+        default: 'edsaperia,claude[bot]'
+    secrets:
+      CLAUDE_CODE_OAUTH_TOKEN:
+        required: true
+
+jobs:
+  build:
+    # only when a comment, review or new issue actually mentions @claude
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
+      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.timeout-minutes }}
+    # one builder per issue or PR at a time; a second mention waits its turn
+    concurrency:
+      group: claude-${{ github.repository }}-${{ github.event.issue.number || github.event.pull_request.number }}
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # the shared instructions, beside the project and never committed into it
+      - uses: actions/checkout@v4
+        with:
+          repository: edsaperia/dev-ops
+          path: .dev-ops
+      - run: echo ".dev-ops/" >> .git/info/exclude
+      - if: inputs.node-version != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+      - if: inputs.setup != ''
+        run: ${{ inputs.setup }}
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          include_comments_by_actor: ${{ inputs.readers }}
+          additional_permissions: |
+            actions: read
+          claude_args: |
+            --model ${{ inputs.model }}
+            --max-turns ${{ inputs.max-turns }}
+            --allowedTools "Bash,Read,Edit,Write,Glob,Grep,WebFetch"
+            --append-system-prompt "Before anything else, read .dev-ops/AGENTS.md and .dev-ops/CONVENTIONS.md (checked out beside the project; never commit that folder) and follow them together with the project's own CLAUDE.md. You are a builder on a GitHub Actions runner (Linux, no human at the keyboard): report on this issue or PR with the prefixes CONVENTIONS.md defines, commit and push your branch after every piece of work, and never touch main."
