@@ -2,7 +2,7 @@
 
 The page where coordinators on Ed's projects put questions only Ed can answer, and Ed answers them from his phone or laptop. It replaces asking in the terminal: one question at a time, multiple choice, the recommended option first, an *Other* free-text answer, an optional note.
 
-- **Page:** https://claude.ai/artifact/FoSoRQxMVh8cZocFpMP6KW
+- **Page:** https://claude.ai/artifact/FoSoRQxMVh8cZocFpMP6KW — also at **https://edsaperia.github.io/dev-ops/q/** (a forwarding page, `q/index.html`)
 - **Access:** private to Ed (the owner). The database rules are read `owner`, write `owner` at the root, so nobody else can read or write it, even if the page is shared. A coordinator reaches it only through the `ArtifactData` tool acting as Ed, in a session Ed runs.
 - **Published:** 2026-09-26, contract 0.2.60, capabilities `db` (rules above) and `user`.
 
