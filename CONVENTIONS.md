@@ -10,7 +10,7 @@ The protocol every agent follows on Ed's projects, whatever model it is and wher
 
 ## The pull request is the conversation
 
-Every piece of work has a **draft pull request**, opened by its builder at the start, titled with what it is and, where it must not be merged yet, `— do not merge`. Everything about the work is said there, so the PR holds the whole record and survives any lost session or machine. Comments start with a prefix, **at the very start of the comment**:
+Every piece of work has a **draft pull request**, opened by its builder at the start (a GitHub Actions builder cannot open one: its conversation is the issue or PR it was mentioned on, and it comments a link for Ed to open the PR), titled with what it is and, where it must not be merged yet, `— do not merge`. Everything about the work is said there, so the PR holds the whole record and survives any lost session or machine. Comments carry a prefix **at the start of a line** — the Actions builder wraps its comments in a header of its own, so readers match a prefix at the start of any line, not only the first:
 
 | Prefix | Who | Meaning |
 |---|---|---|
@@ -31,6 +31,10 @@ All agents may post as Ed's GitHub account; the prefix says who is speaking.
 
 - **`@claude` in an issue or PR comment** (by someone with write access) starts a Claude builder on a GitHub Actions runner in any repo wired up per [`claude/SETUP.md`](claude/SETUP.md). It reads the project's `CLAUDE.md`, this file and `AGENTS.md`, pushes a `claude/…` branch, and comments a link to open the PR.
 - A cloud session (claude.ai/code) is woken by a message; a coordinator posts the instruction as a `COORDINATOR:` comment first, then sends the one-line nudge *read the latest COORDINATOR comment on your PR and act on it*.
+
+## Precedence
+
+An explicit instruction in a brief or `COORDINATOR:` comment overrides these defaults (for example *push nothing* in a smoke test, or a named prefix for the reply). Otherwise this file holds.
 
 ## Decisions
 
