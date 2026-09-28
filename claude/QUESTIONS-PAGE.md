@@ -23,6 +23,7 @@ One document per item. An item is a **question** (choose among options), an **up
 | `options` | array of `{key, label, description, recommended?}` | coordinator | the choices. The first is the recommendation and carries `recommended: true` (the page also moves any recommended option to the top). `description` is the one-line consequence. `key` is what comes back in the answer |
 | `multi` | bool | coordinator | `true` lets Ed pick several; default `false` |
 | `links` | array of `{label, url}` | coordinator | optional; `https://` only (a PR, a screenshot) |
+| `copy` | array of `{label, text}` | coordinator | optional: each entry is a **Copy: ‹label›** button beside the links that puts `text` on the clipboard — for a line Ed has to paste somewhere else, such as a builder session's first message (Ed, 2026-09-28) |
 | `status` | `"open"` \| `"answered"` \| `"withdrawn"` | both | `open` when asked; the page sets `answered`; a coordinator sets `withdrawn` to take a question back |
 | `answer` | `{keys: [..], other: string, note: string, at: ISO}` | page | Ed's answer. `keys` are option keys (may be empty when he wrote only *Other*); for an update it is `["ok"]`, for a task `["done"]`; `other` is his own answer text or `""`; `note` is his note (or reply) to you or `""` |
 | `handledAt` | ISO datetime | coordinator | optional: set once the coordinator has acted on the answer |

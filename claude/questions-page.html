@@ -74,6 +74,8 @@ button:focus-visible,textarea:focus-visible,a:focus-visible,label.opt:focus-with
 .links{display:flex;flex-wrap:wrap;gap:8px}
 .links a{font-size:.88rem;font-weight:700;text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:6px 10px}
 .links a::after{content:" \2197"}
+.links button{font:inherit;font-size:.88rem;font-weight:700;color:var(--accent);background:none;border:1px solid var(--line);border-radius:8px;padding:6px 10px;cursor:pointer;min-height:36px}
+.links .copied{font-size:.85rem;color:var(--muted);align-self:center}
 
 .label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:0}
 .opts{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;border:0}
@@ -404,6 +406,9 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     const type = multi ? 'checkbox' : 'radio';
     const opts = optsOf(q);
     const links = (Array.isArray(q.links) ? q.links : []).filter(l => safeUrl(l && l.url));
+    // **a line to paste somewhere else gets a button** (Ed, 2026-09-28, on the task to open a
+    // builder session: *why doesn't this card have a copy button for "Read issue #112 …"?*)
+    const copies = (Array.isArray(q.copy) ? q.copy : []).filter(c => c && typeof c.text === 'string' && c.text.trim());
     const by = [q.askedBy ? esc(q.askedBy) : '', q.asked ? '<time title="' + esc(full(q.asked)) + '">' + esc(ago(q.asked)) + '</time>' : ''].filter(Boolean).join(' · ');
     const counter = mode === 'now' ? '<span class="count">' + pos + ' of ' + total + ' waiting</span>' : '<span class="count">' + (read ? esc(okWord(q)) : 'Answered') + '</span>';
     const primary = S.busy ? 'Saving…' : mode === 'edit' ? (read ? okWord(q) + ' again' : 'Update answer') : (read ? okWord(q) : 'Answer');
@@ -411,7 +416,8 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
       '<div class="meta">' + tagsHtml(q) + (by ? '<span>' + by + '</span>' : '') + counter + '</div>' +
       '<h2 class="qtitle">' + esc(q.title || (read ? 'Update' : 'Untitled question')) + '</h2>' +
       (q.context ? '<div class="ctx">' + richText(q.context) + '</div>' : '') +
-      (links.length ? '<div class="links">' + links.map(l => '<a href="' + esc(safeUrl(l.url)) + '" target="_blank" rel="noopener">' + esc(l.label || l.url) + '</a>').join('') + '</div>' : '') +
+      (links.length || copies.length ? '<div class="links">' + links.map(l => '<a href="' + esc(safeUrl(l.url)) + '" target="_blank" rel="noopener">' + esc(l.label || l.url) + '</a>').join('') +
+        copies.map(c => '<button type="button" data-copytext="' + esc(c.text) + '">Copy: ' + esc(c.label || c.text) + '</button>').join('') + '<span class="copied" aria-live="polite"></span></div>' : '') +
       (read ? '' :
       '<fieldset class="opts"><legend class="label" style="margin-bottom:10px">' + (multi ? 'Choose any that apply' : 'Choose one') + '</legend>' +
         opts.map((o, i) =>
@@ -491,6 +497,12 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     syncButton();
   });
   main.addEventListener('click', e => {
+    const cp = e.target.closest('[data-copytext]');
+    if (cp) {
+      const note = cp.parentElement.querySelector('.copied');
+      copyText(cp.dataset.copytext).then(ok => { if (note) note.textContent = ok ? 'Copied.' : 'Could not copy — select the text on the button and copy it.'; });
+      return;
+    }
     const open = e.target.closest('[data-open]');
     if (open) { S.editId = open.dataset.open; S.error = ''; S.animate = true; render(true); window.scrollTo(0, 0); return; }
     const act = e.target.closest('[data-act]')?.dataset.act; if (!act) return;
