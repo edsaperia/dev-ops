@@ -1,0 +1,525 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Questions for Ed</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Source+Serif+4:opsz,wght@8..60,600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+:root{
+  --bg:#EEF1F5; --surface:#FFFFFF; --ink:#161E2E; --muted:#586277; --faint:#8A93A5;
+  --line:#D8DEE8; --accent:#2F58CC; --accent-ink:#FFFFFF; --accent-soft:#E5EBFA;
+  --rec:#1F6B52; --rec-soft:#E1F1EA; --warn:#A23A2A;
+  --shadow:0 1px 2px rgba(22,30,46,.06),0 8px 24px -12px rgba(22,30,46,.18);
+  --f-ui:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-head:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0D121B; --surface:#161D2A; --ink:#E4E9F2; --muted:#9BA5B8; --faint:#6E788B;
+    --line:#2A3343; --accent:#7F9DFF; --accent-ink:#0D121B; --accent-soft:#1E2A47;
+    --rec:#6FD0A8; --rec-soft:#15302A; --warn:#F08B79;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px -14px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0D121B; --surface:#161D2A; --ink:#E4E9F2; --muted:#9BA5B8; --faint:#6E788B;
+  --line:#2A3343; --accent:#7F9DFF; --accent-ink:#0D121B; --accent-soft:#1E2A47;
+  --rec:#6FD0A8; --rec-soft:#15302A; --warn:#F08B79;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px -14px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 var(--f-ui);padding-inline:16px;padding-block:0 24px;margin:0}
+.wrap{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:14px 10px;border-bottom:1px solid var(--line)}
+header.top h1{font:600 1.15rem/1.2 var(--f-head);margin:0;letter-spacing:.005em}
+.seg{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px}
+.seg button{font:700 .85rem/1 var(--f-ui);color:var(--muted);background:none;border:0;border-radius:999px;padding:8px 12px;cursor:pointer;min-height:34px;font-variant-numeric:tabular-nums}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+button:focus-visible,textarea:focus-visible,a:focus-visible,label.opt:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+
+.wake{display:flex;align-items:center;gap:8px;margin:0;font-size:.85rem;color:var(--muted)}
+.wake .dot{width:8px;height:8px;border-radius:50%;background:var(--faint);flex:none}
+.wake[data-state="available"] .dot,.wake[data-state="sent"] .dot{background:var(--rec)}
+.wake[data-state="asleep"] .dot{background:var(--warn)}
+.wake[data-state="asleep"]{color:var(--warn)}
+
+.card{background:var(--surface);border-radius:14px;box-shadow:var(--shadow);padding:20px 18px;display:flex;flex-direction:column;gap:18px}
+.card.enter{animation:enter .26s ease-out}
+.card.leave{animation:leave .18s ease-in forwards}
+@keyframes enter{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+@keyframes leave{to{opacity:0;transform:translateX(-28px)}}
+@media (prefers-reduced-motion:reduce){.card.enter,.card.leave{animation:none}}
+
+.meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:.82rem;color:var(--muted)}
+.tag{font:500 .75rem/1 var(--f-mono);background:var(--accent-soft);color:var(--accent);padding:5px 8px;border-radius:6px;letter-spacing:.02em}
+.tag.kind{background:var(--rec-soft);color:var(--rec)}
+.tag.kind.task{background:var(--surface);color:var(--warn);border:1px solid var(--warn)}
+.num{font:500 .8rem/1 var(--f-mono);color:var(--ink)}
+.count{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:700;color:var(--ink)}
+.qtitle{font:600 1.45rem/1.25 var(--f-head);margin:0;text-wrap:balance}
+.ctx{color:var(--ink);max-width:65ch;display:flex;flex-direction:column;gap:10px}
+.ctx p,.ctx ul{margin:0}
+.ctx ul{padding-left:1.2em;display:flex;flex-direction:column;gap:4px}
+.ctx code{font:500 .85em var(--f-mono);background:var(--bg);padding:1px 5px;border-radius:4px;word-break:break-word}
+.ctx a,.links a{color:var(--accent);overflow-wrap:anywhere}
+.links{display:flex;flex-wrap:wrap;gap:8px}
+.links a{font-size:.88rem;font-weight:700;text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+.links a::after{content:" \2197"}
+
+.label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:0}
+.opts{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;border:0}
+label.opt{display:grid;grid-template-columns:22px 1fr;gap:4px 12px;align-items:start;border:1.5px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;min-height:56px;background:var(--surface);transition:border-color .12s,background .12s}
+label.opt input{appearance:none;width:22px;height:22px;margin:1px 0 0;border:2px solid var(--faint);border-radius:50%;display:grid;place-items:center;grid-row:span 2}
+label.opt input[type=checkbox]{border-radius:6px}
+label.opt input:checked{border-color:var(--accent);background:var(--accent)}
+label.opt input:checked::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent-ink)}
+label.opt input[type=checkbox]:checked::after{width:10px;height:6px;border-radius:0;background:none;border:2px solid var(--accent-ink);border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
+label.opt:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.olabel{font-weight:700;display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}
+.odesc{color:var(--muted);font-size:.92rem;grid-column:2}
+.rec{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--rec);background:var(--rec-soft);padding:3px 7px;border-radius:999px}
+textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;resize:vertical;min-height:84px}
+.otherbox{grid-column:2;margin-top:6px}
+.linkbtn{align-self:flex-start;background:none;border:0;padding:6px 0;color:var(--accent);font:700 .92rem var(--f-ui);cursor:pointer}
+.notewrap{display:flex;flex-direction:column;gap:8px}
+
+.actions{position:sticky;bottom:0;margin-inline:-18px;margin-bottom:-20px;padding:14px 18px calc(16px + env(safe-area-inset-bottom,0px));background:linear-gradient(to bottom,transparent,var(--surface) 22%);display:flex;align-items:center;gap:12px;border-radius:0 0 14px 14px}
+.primary{flex:1;font:700 1.05rem/1 var(--f-ui);background:var(--accent);color:var(--accent-ink);border:0;border-radius:12px;min-height:52px;cursor:pointer}
+.primary:disabled{opacity:.4;cursor:not-allowed}
+.ghost{font:700 .95rem/1 var(--f-ui);background:none;color:var(--muted);border:1.5px solid var(--line);border-radius:12px;min-height:52px;padding:0 16px;cursor:pointer}
+.err{color:var(--warn);font-size:.9rem;margin:0}
+.prev{font-size:.88rem;color:var(--muted);margin:0}
+
+.empty{text-align:center;padding:56px 20px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.empty .mark{width:44px;height:44px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;color:var(--rec);font-size:1.3rem}
+.empty h2{font:600 1.3rem/1.2 var(--f-head);margin:6px 0 0}
+.empty p{color:var(--muted);margin:0;max-width:40ch}
+
+.hist{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
+.hist button{width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:6px;cursor:pointer;color:var(--ink);font:inherit}
+.hist .htitle{font-weight:700;line-height:1.3}
+.hist .hans{color:var(--muted);font-size:.92rem;overflow-wrap:anywhere}
+.hist .hans b{color:var(--ink)}
+.hist .hmeta{display:flex;gap:8px;align-items:center;font-size:.8rem;color:var(--faint)}
+.hist .hmeta time{margin-left:auto;font-variant-numeric:tabular-nums}
+.notice{color:var(--muted);text-align:center;padding:40px 12px}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <h1 id="title">Questions for Ed</h1>
+    <nav class="seg" aria-label="View">
+      <button id="tab-now" aria-pressed="true">Waiting <span id="n-open"></span></button>
+      <button id="tab-hist" aria-pressed="false">History</button>
+    </nav>
+  </header>
+  <p id="wake" class="wake" role="status" hidden><span class="dot" aria-hidden="true"></span><span id="wake-text"></span></p>
+  <main id="main"><p class="notice">Loading questions…</p></main>
+</div>
+
+<script>
+(function(){
+  const main = document.getElementById('main');
+  const tabNow = document.getElementById('tab-now');
+  const tabHist = document.getElementById('tab-hist');
+  const nOpen = document.getElementById('n-open');
+  const wakeEl = document.getElementById('wake');
+  const wakeText = document.getElementById('wake-text');
+  const titleEl = document.getElementById('title');
+
+  const S = {
+    db: null, ready: false, failed: '',
+    docs: new Map(),          // id -> data
+    view: 'now',              // 'now' | 'hist'
+    currentId: null,          // item shown in Waiting
+    editId: null,             // answered item reopened from History
+    drafts: {},               // id -> {keys:Set, otherOn, other, note, noteOpen}
+    skipped: new Set(),
+    busy: false, error: '',
+    shownKey: '', animate: false,
+    comments: null,           // the comments namespace, or null
+    canWake: '',              // last canSendToClaude() answer
+    threads: {},              // project -> threadId of that project's wake thread
+    wakeMsg: '', wakeState: '' // the outcome of the last send, shown until the next check
+  };
+
+  // ---------- helpers ----------
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const safeUrl = u => /^https?:\/\//i.test(String(u || '')) ? String(u) : '';
+  function inline(s){
+    let t = esc(s);
+    t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
+    t = t.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    t = t.replace(/(^|[\s(])(https?:\/\/[^\s<)]+)/g, (m, pre, url) => pre + '<a href="' + url + '" target="_blank" rel="noopener">' + url + '</a>');
+    return t;
+  }
+  function richText(text){
+    const blocks = String(text || '').replace(/\r\n/g, '\n').trim().split(/\n\s*\n/);
+    return blocks.filter(b => b.trim()).map(b => {
+      const lines = b.split('\n');
+      if (lines.every(l => /^\s*[-*]\s+/.test(l))) {
+        return '<ul>' + lines.map(l => '<li>' + inline(l.replace(/^\s*[-*]\s+/, '')) + '</li>').join('') + '</ul>';
+      }
+      return '<p>' + lines.map(inline).join('<br>') + '</p>';
+    }).join('');
+  }
+  function ago(iso){
+    const t = Date.parse(iso); if (!t) return '';
+    const s = Math.round((Date.now() - t) / 1000);
+    if (s < 60) return 'just now';
+    const m = Math.round(s / 60); if (m < 60) return m + ' min ago';
+    const h = Math.round(m / 60); if (h < 24) return h + ' h ago';
+    const d = Math.round(h / 24); if (d < 7) return d + (d === 1 ? ' day ago' : ' days ago');
+    return new Date(t).toLocaleDateString(undefined, {day:'numeric', month:'short'});
+  }
+  const full = iso => { const t = Date.parse(iso); return t ? new Date(t).toLocaleString() : ''; };
+  const optsOf = q => {
+    const o = Array.isArray(q.options) ? q.options.filter(x => x && x.key != null) : [];
+    return o.filter(x => x.recommended).concat(o.filter(x => !x.recommended));
+  };
+  // An item is a question (choices), an update (read, then OK) or a task (do it, then Done).
+  const kindOf = q => q.kind === 'update' || q.kind === 'task' ? q.kind : 'question';
+  const isRead = q => kindOf(q) !== 'question';
+  const okWord = q => kindOf(q) === 'task' ? 'Done' : 'OK';
+  const projectKey = q => String(q.project || 'project').replace(/[^A-Za-z0-9_\-.~:@+]/g, '-').slice(0, 100) || 'project';
+
+  function openList(){
+    return [...S.docs.entries()].filter(([, q]) => q.status === 'open')
+      .sort(([ia, a], [ib, b]) => (Date.parse(a.asked) || 0) - (Date.parse(b.asked) || 0) || ia.localeCompare(ib));
+  }
+  function answeredList(){
+    return [...S.docs.entries()].filter(([, q]) => q.status === 'answered')
+      .sort(([, a], [, b]) => (Date.parse(b.answer?.at) || 0) - (Date.parse(a.answer?.at) || 0));
+  }
+  function pickCurrent(){
+    const open = openList();
+    if (S.currentId && S.docs.get(S.currentId)?.status === 'open') return;
+    let next = open.find(([id]) => !S.skipped.has(id));
+    if (!next && open.length) { S.skipped.clear(); next = open[0]; }
+    if (next && S.currentId !== next[0]) S.animate = true;
+    S.currentId = next ? next[0] : null;
+  }
+  function draftFor(id, q){
+    if (!S.drafts[id]) {
+      const a = q.answer || {};
+      S.drafts[id] = {
+        keys: new Set(Array.isArray(a.keys) ? a.keys : []),
+        otherOn: !!a.other, other: a.other || '',
+        note: a.note || '', noteOpen: !!a.note
+      };
+    }
+    return S.drafts[id];
+  }
+  const canSubmit = (d, q) => isRead(q) || d.keys.size > 0 || (d.otherOn && d.other.trim());
+
+  // ---------- waking the coordinator ----------
+  // Every answer is also sent to Claude as a comment on this page, which wakes any
+  // coordinator session watching it. The db stays the record; the comment is the doorbell.
+  function renderWake(){
+    if (!S.comments) { wakeEl.hidden = true; return; }
+    let state, text;
+    if (S.wakeMsg) { state = S.wakeState; text = S.wakeMsg; }
+    else if (S.canWake === 'available') { state = 'available'; text = 'A coordinator is listening: answering wakes it.'; }
+    else if (S.canWake === 'no_session') { state = 'asleep'; text = 'No coordinator is listening. Answers are saved, but nobody is woken until one watches this page.'; }
+    else { state = 'off'; text = 'Answers are saved; waking a coordinator is not available in this view.'; }
+    wakeEl.dataset.state = state;
+    wakeText.textContent = text;
+    wakeEl.hidden = false;
+  }
+  async function refreshWake(){
+    if (!S.comments) return;
+    try { S.canWake = await S.comments.canSendToClaude(); } catch (e) { S.canWake = 'off'; }
+    renderWake();
+  }
+  function wakeText_(id, q, answer){
+    const k = kindOf(q);
+    const lines = [];
+    const verb = k === 'question' ? 'answered' : k === 'task' ? 'marked done' : 'OKed';
+    lines.push('[questions page] Ed ' + verb + ' ' + id + ' (' + k + '): ' + (q.title || ''));
+    if (k === 'question') {
+      const byKey = new Map(optsOf(q).map(o => [String(o.key), o.label || o.key]));
+      const picked = (answer.keys || []).map(key => key + ' — ' + (byKey.get(String(key)) || key));
+      if (picked.length) lines.push('Answer: ' + picked.join('; '));
+      if (answer.other) lines.push('Other: ' + answer.other);
+    }
+    if (answer.note) lines.push('Note: ' + answer.note);
+    lines.push('Project: ' + (q.project || '') + '. If that is your project, read questions/' + id + ' from this page\'s db, act on it, and set handledAt. Otherwise ignore this.');
+    // 4 KiB cap as UTF-8: each free-text line is cut short, never the instruction line;
+    // the full answer is in the db either way
+    return lines.map((l, i) => i < lines.length - 1 && l.length > 700 ? l.slice(0, 700) + '…' : l).join('\n');
+  }
+  // Started inside the press, before any other await, so the send counts as Ed's own gesture.
+  async function wakeCoordinator(id, q, answer){
+    if (!S.comments) return { ok: false, why: 'none' };
+    if (S.canWake !== 'available') return { ok: false, why: S.canWake || 'off' };
+    const text = wakeText_(id, q, answer);
+    const proj = projectKey(q);
+    const tid = S.threads[proj];
+    const fresh = async () => {
+      const anchor = await S.comments.anchorFor(titleEl);
+      const r = await S.comments.sendToClaude({ anchor, text });
+      S.threads[proj] = r.threadId;
+      if (S.db) S.db.doc('wake/' + proj).set({ threadId: r.threadId, at: new Date().toISOString() }).catch(() => {});
+      return r;
+    };
+    try {
+      if (tid) {
+        try { await S.comments.sendToClaude({ threadId: tid, text }); }
+        catch (e) {
+          // the project's thread is gone or full: start a new one
+          if (e && (e.code === 'not_found' || e.code === 'upstream_error' || e.code === 'invalid')) await fresh();
+          else throw e;
+        }
+      } else await fresh();
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, why: (e && e.code) || 'upstream_error' };
+    }
+  }
+  function noteWake(res){
+    if (res.ok) { S.wakeState = 'sent'; S.wakeMsg = 'Saved and sent to the coordinator.'; }
+    else if (res.why === 'none') { S.wakeMsg = ''; }
+    else if (res.why === 'no_session' || res.why === 'claude_unavailable') { S.wakeState = 'asleep'; S.wakeMsg = 'Saved. No coordinator was listening, so nobody was woken.'; }
+    else if (res.why === 'consent_required' || res.why === 'forbidden') { S.wakeState = 'asleep'; S.wakeMsg = 'Saved. Waking the coordinator needs this page to comment as you; allow it when asked.'; }
+    else { S.wakeState = 'asleep'; S.wakeMsg = 'Saved, but the coordinator could not be woken (' + res.why + ').'; }
+    renderWake();
+    clearTimeout(noteWake.t);
+    noteWake.t = setTimeout(() => { S.wakeMsg = ''; refreshWake(); }, 15000);
+  }
+
+  // ---------- rendering ----------
+  function render(force){
+    const open = openList();
+    nOpen.textContent = open.length ? '(' + open.length + ')' : '';
+    tabNow.setAttribute('aria-pressed', String(S.view === 'now'));
+    tabHist.setAttribute('aria-pressed', String(S.view === 'hist'));
+
+    if (S.failed) { main.innerHTML = '<p class="notice">' + esc(S.failed) + '</p>'; S.shownKey = ''; return; }
+    if (!S.ready) return;
+
+    let key, html;
+    if (S.view === 'hist' && S.editId && S.docs.get(S.editId)) {
+      const q = S.docs.get(S.editId);
+      key = 'edit:' + S.editId + JSON.stringify(q);
+      if (!force && key === S.shownKey) return;
+      html = cardHtml(S.editId, q, 'edit');
+    } else if (S.view === 'hist') {
+      const list = answeredList();
+      key = 'hist:' + JSON.stringify(list);
+      if (!force && key === S.shownKey) return;
+      html = histHtml(list);
+    } else {
+      pickCurrent();
+      if (!S.currentId) {
+        key = 'empty:' + answeredList().length;
+        if (!force && key === S.shownKey) return;
+        html = emptyHtml();
+      } else {
+        const q = S.docs.get(S.currentId);
+        const pos = open.findIndex(([id]) => id === S.currentId) + 1;
+        key = 'now:' + S.currentId + JSON.stringify(q);
+        if (!force && key === S.shownKey) {
+          // same item, same content: only the counter moves, so typing keeps its caret
+          const c = main.querySelector('.count'); if (c) c.textContent = pos + ' of ' + open.length + ' waiting';
+          const skip = main.querySelector('[data-act="skip"]');
+          if (!skip && open.length > 1) { const a = main.querySelector('.actions'); if (a) a.insertAdjacentHTML('afterbegin', '<button class="ghost" data-act="skip">Later</button>'); }
+          return;
+        }
+        html = cardHtml(S.currentId, q, 'now', pos, open.length);
+      }
+    }
+    S.shownKey = key;
+    main.innerHTML = html;
+    const card = main.querySelector('.card');
+    if (card && S.animate) card.classList.add('enter');
+    S.animate = false;
+  }
+
+  function tagsHtml(q){
+    const k = kindOf(q);
+    return '<span class="tag">' + esc(q.project || 'project') + '</span>' +
+      (k !== 'question' ? '<span class="tag kind ' + k + '">' + k + '</span>' : '') +
+      (q.number ? '<span class="num">#' + esc(q.number) + '</span>' : '');
+  }
+
+  function cardHtml(id, q, mode, pos, total){
+    const d = draftFor(id, q);
+    const read = isRead(q);
+    const multi = !!q.multi;
+    const type = multi ? 'checkbox' : 'radio';
+    const opts = optsOf(q);
+    const links = (Array.isArray(q.links) ? q.links : []).filter(l => safeUrl(l && l.url));
+    const by = [q.askedBy ? esc(q.askedBy) : '', q.asked ? '<time title="' + esc(full(q.asked)) + '">' + esc(ago(q.asked)) + '</time>' : ''].filter(Boolean).join(' · ');
+    const counter = mode === 'now' ? '<span class="count">' + pos + ' of ' + total + ' waiting</span>' : '<span class="count">' + (read ? esc(okWord(q)) : 'Answered') + '</span>';
+    const primary = S.busy ? 'Saving…' : mode === 'edit' ? (read ? okWord(q) + ' again' : 'Update answer') : (read ? okWord(q) : 'Answer');
+    return '<article class="card" data-id="' + esc(id) + '">' +
+      '<div class="meta">' + tagsHtml(q) + (by ? '<span>' + by + '</span>' : '') + counter + '</div>' +
+      '<h2 class="qtitle">' + esc(q.title || (read ? 'Update' : 'Untitled question')) + '</h2>' +
+      (q.context ? '<div class="ctx">' + richText(q.context) + '</div>' : '') +
+      (links.length ? '<div class="links">' + links.map(l => '<a href="' + esc(safeUrl(l.url)) + '" target="_blank" rel="noopener">' + esc(l.label || l.url) + '</a>').join('') + '</div>' : '') +
+      (read ? '' :
+      '<fieldset class="opts"><legend class="label" style="margin-bottom:10px">' + (multi ? 'Choose any that apply' : 'Choose one') + '</legend>' +
+        opts.map((o, i) =>
+          '<label class="opt"><input type="' + type + '" name="opt" id="opt-' + esc(id) + '-' + i + '" data-key="' + esc(o.key) + '"' + (d.keys.has(String(o.key)) ? ' checked' : '') + '>' +
+          '<span class="olabel">' + esc(o.label || o.key) + (o.recommended ? '<span class="rec">Recommended</span>' : '') + '</span>' +
+          (o.description ? '<span class="odesc">' + esc(o.description) + '</span>' : '') + '</label>').join('') +
+        '<label class="opt"><input type="' + type + '" name="opt" id="opt-' + esc(id) + '-other" data-other="1"' + (d.otherOn ? ' checked' : '') + '>' +
+          '<span class="olabel">Other…</span><span class="odesc">Write your own answer.</span>' +
+          (d.otherOn ? '<div class="otherbox"><textarea id="other-' + esc(id) + '" data-field="other" placeholder="Your answer" aria-label="Your own answer">' + esc(d.other) + '</textarea></div>' : '') +
+        '</label>' +
+      '</fieldset>') +
+      '<div class="notewrap">' + (d.noteOpen
+        ? '<label class="label" for="note-' + esc(id) + '">' + (read ? 'Reply to the coordinator (optional)' : 'Note for the coordinator (optional)') + '</label><textarea id="note-' + esc(id) + '" data-field="note" placeholder="Anything they should know">' + esc(d.note) + '</textarea>'
+        : '<button class="linkbtn" data-act="note">' + (read ? '+ Reply' : '+ Add a note') + '</button>') + '</div>' +
+      (mode === 'edit' && q.answer?.at ? '<p class="prev">' + (read ? 'Read ' : 'First answered ') + esc(ago(q.answer.at)) + '. Saving replaces that.</p>' : '') +
+      (S.error ? '<p class="err" role="alert">' + esc(S.error) + '</p>' : '') +
+      '<div class="actions">' +
+        (mode === 'edit' ? '<button class="ghost" data-act="back">Back</button>'
+          : (total > 1 ? '<button class="ghost" data-act="skip">Later</button>' : '')) +
+        '<button class="primary" data-act="answer"' + (canSubmit(d, q) && !S.busy ? '' : ' disabled') + '>' + esc(primary) + '</button>' +
+      '</div>' +
+    '</article>';
+  }
+
+  function emptyHtml(){
+    const n = answeredList().length;
+    return '<div class="empty"><div class="mark" aria-hidden="true">&#10003;</div><h2>Nothing waiting</h2>' +
+      '<p>Questions, updates and tasks appear here as soon as a coordinator adds one.' + (n ? ' ' + n + ' in History.' : '') + '</p></div>';
+  }
+
+  function summary(q){
+    const a = q.answer || {};
+    if (isRead(q)) return '<b>' + esc(okWord(q)) + '</b>' + (a.note ? ' — ' + esc(a.note) : '');
+    const byKey = new Map(optsOf(q).map(o => [String(o.key), o.label || o.key]));
+    const parts = (a.keys || []).map(k => '<b>' + esc(byKey.get(String(k)) || k) + '</b>');
+    if (a.other) parts.push('Other: <b>' + esc(a.other) + '</b>');
+    return parts.join('; ') || 'No choice recorded';
+  }
+  function histHtml(list){
+    if (!list.length) return '<div class="empty"><h2>No history yet</h2><p>What you answer or OK is kept here, and you can change an answer later.</p></div>';
+    return '<ul class="hist">' + list.map(([id, q]) =>
+      '<li><button data-open="' + esc(id) + '">' +
+        '<span class="hmeta">' + tagsHtml(q) +
+        '<time title="' + esc(full(q.answer?.at)) + '">' + esc(ago(q.answer?.at)) + '</time></span>' +
+        '<span class="htitle">' + esc(q.title || (isRead(q) ? 'Update' : 'Untitled question')) + '</span>' +
+        '<span class="hans">' + summary(q) + '</span>' +
+      '</button></li>').join('') + '</ul>';
+  }
+
+  // ---------- interaction ----------
+  function activeId(){ return S.view === 'hist' ? S.editId : S.currentId; }
+  function syncButton(){
+    const id = activeId(); const q = S.docs.get(id); const d = id && S.drafts[id];
+    const b = main.querySelector('[data-act="answer"]');
+    if (b && d && q) b.disabled = !canSubmit(d, q) || S.busy;
+  }
+
+  main.addEventListener('change', e => {
+    const inp = e.target.closest('input[name="opt"]'); if (!inp) return;
+    const id = activeId(); const q = S.docs.get(id); if (!q) return;
+    const d = draftFor(id, q);
+    if (q.multi) {
+      if (inp.dataset.other) d.otherOn = inp.checked;
+      else inp.checked ? d.keys.add(inp.dataset.key) : d.keys.delete(inp.dataset.key);
+    } else {
+      if (inp.dataset.other) { d.otherOn = true; d.keys.clear(); }
+      else { d.otherOn = false; d.keys = new Set([inp.dataset.key]); }
+    }
+    S.error = '';
+    render(true);
+    if (d.otherOn && inp.dataset.other) main.querySelector('[data-field="other"]')?.focus();
+  });
+  main.addEventListener('input', e => {
+    const f = e.target.dataset.field; if (!f) return;
+    const id = activeId(); const q = S.docs.get(id); if (!q) return;
+    draftFor(id, q)[f] = e.target.value;
+    syncButton();
+  });
+  main.addEventListener('click', e => {
+    const open = e.target.closest('[data-open]');
+    if (open) { S.editId = open.dataset.open; S.error = ''; S.animate = true; render(true); window.scrollTo(0, 0); return; }
+    const act = e.target.closest('[data-act]')?.dataset.act; if (!act) return;
+    const id = activeId(); const q = S.docs.get(id);
+    if (act === 'note' && q) { draftFor(id, q).noteOpen = true; render(true); main.querySelector('[data-field="note"]')?.focus(); }
+    else if (act === 'back') { S.editId = null; S.error = ''; render(true); }
+    else if (act === 'skip') { S.skipped.add(S.currentId); S.currentId = null; S.error = ''; leaveThen(() => render(true)); }
+    else if (act === 'answer') submit(id, q);
+  });
+  function leaveThen(fn){
+    const card = main.querySelector('.card');
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!card || reduce) { S.animate = true; fn(); window.scrollTo(0, 0); return; }
+    card.classList.add('leave');
+    setTimeout(() => { S.animate = true; fn(); window.scrollTo(0, 0); }, 170);
+  }
+
+  async function submit(id, q){
+    if (!q || S.busy || !S.db) return;
+    const d = draftFor(id, q);
+    if (!canSubmit(d, q)) return;
+    const answer = isRead(q)
+      ? { keys: [kindOf(q) === 'task' ? 'done' : 'ok'], other: '', note: d.noteOpen ? d.note.trim() : '', at: new Date().toISOString() }
+      : { keys: [...d.keys], other: d.otherOn ? d.other.trim() : '', note: d.noteOpen ? d.note.trim() : '', at: new Date().toISOString() };
+    S.busy = true; S.error = ''; syncButton();
+    const b = main.querySelector('[data-act="answer"]'); if (b) b.textContent = 'Saving…';
+    const woken = wakeCoordinator(id, q, answer);   // started now, while the press is fresh
+    try {
+      await S.db.doc('questions/' + id).update({ status: 'answered', answer });
+      S.busy = false;
+      delete S.drafts[id];
+      const wasEdit = S.view === 'hist';
+      // reflect locally at once; the snapshot confirms it
+      S.docs.set(id, Object.assign({}, q, { status: 'answered', answer }));
+      if (wasEdit) { S.editId = null; render(true); }
+      else { S.currentId = null; leaveThen(() => render(true)); }
+      woken.then(noteWake);
+    } catch (err) {
+      S.busy = false;
+      S.error = err && err.code === 'invalid_argument'
+        ? 'This could not be saved. Only the page owner can answer, and the item must still exist.'
+        : 'This could not be saved. Check your connection and press the button again.';
+      render(true);
+    }
+  }
+
+  tabNow.addEventListener('click', () => { S.view = 'now'; S.editId = null; S.error = ''; render(true); });
+  tabHist.addEventListener('click', () => { S.view = 'hist'; S.error = ''; render(true); });
+  setInterval(() => { if (!main.querySelector('textarea:focus')) render(true); if (!S.wakeMsg) refreshWake(); }, 60000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && !S.wakeMsg) refreshWake(); });
+
+  // ---------- data ----------
+  (async () => {
+    const use = window.claude && window.claude.use ? n => window.claude.use(n) : async () => null;
+    use('comments').then(c => { S.comments = c; refreshWake(); }).catch(() => {});
+    const db = await use('db');
+    if (!db) { S.failed = 'The question store is not available in this view. Open this page on claude.ai while signed in.'; render(true); return; }
+    S.db = db;
+    db.collection('wake').onSnapshot(snap => {
+      snap.docs.forEach(doc => { const t = doc.exists && doc.data().threadId; if (t) S.threads[doc.id] = t; });
+    }, () => {});
+    db.collection('questions').onSnapshot(snap => {
+      const next = new Map();
+      snap.docs.forEach(doc => { if (doc.exists) next.set(doc.id, doc.data()); });
+      S.docs = next; S.ready = true; S.failed = '';
+      if (main.querySelector('.notice')) S.animate = true;
+      render(false);
+    }, err => {
+      S.failed = err && err.code === 'revoked'
+        ? 'Access to this page changed. Reload to continue.'
+        : 'Lost the connection to the question store. Reload the page to reconnect.';
+      render(true);
+    });
+  })();
+})();
+</script>
+
+</body>
+</html>

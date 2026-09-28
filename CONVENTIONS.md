@@ -33,6 +33,14 @@ All agents may post as Ed's GitHub account; the prefix says who is speaking.
 - **`@claude` in an issue or PR comment** (by someone with write access) starts a Claude builder on a GitHub Actions runner in any repo wired up per [`claude/SETUP.md`](claude/SETUP.md). It reads the project's `CLAUDE.md`, this file and `AGENTS.md`, pushes a `claude/…` branch, and comments a link to open the PR.
 - A cloud session (claude.ai/code) is woken by a message; a coordinator posts the instruction as a `COORDINATOR:` comment first, then sends the one-line nudge *read the latest COORDINATOR comment on your PR and act on it*.
 
+## Waking a coordinator: Ed's questions page
+
+A coordinator sleeps between messages, and nothing on GitHub wakes it (2026-09-26/28: a cloud coordinator went quiet seven times, for up to ten hours). So the loop runs through Ed's questions page ([`claude/QUESTIONS-PAGE.md`](claude/QUESTIONS-PAGE.md)):
+
+- **When anything finishes** — a `FINAL:` reviewed, a deploy verified, a check gone red — the coordinator puts an *update* on the page saying what finished and what it will start next. It does not start the next thing on its own.
+- **Ed's OK starts it**: every answer, OK and Done on the page wakes the coordinator watching it. The coordinator asks Ed to paste the page's link at the start of each session, which is what arms its watch.
+- **A coordinator schedules no check-ins of its own** and asks nothing through tool approval prompts that can expire unseen: everything that waits on Ed waits on the page.
+
 ## Precedence
 
 An explicit instruction in a brief or `COORDINATOR:` comment overrides these defaults (for example *push nothing* in a smoke test, or a named prefix for the reply). Otherwise this file holds.
