@@ -38,6 +38,9 @@ All agents may post as Ed's GitHub account; the prefix says who is speaking.
 A coordinator sleeps between messages, and nothing on GitHub wakes it (2026-09-26/28: a cloud coordinator went quiet seven times, for up to ten hours). So the loop runs through Ed's questions page ([`claude/QUESTIONS-PAGE.md`](claude/QUESTIONS-PAGE.md)):
 
 - **When anything finishes** — a `FINAL:` reviewed, a deploy verified, a check gone red — the coordinator puts an *update* on the page saying what finished and what it will start next. It does not start the next thing on its own.
+- **A builder that finishes says so on the page too**: with its `FINAL:` (or a blocking `QUESTION:`), a cloud-session builder puts an update on the page, *PR #n: finished — OK to have the coordinator review it*; Ed's OK wakes the coordinator to review. Without it a builder's `FINAL:` sits unread until something else wakes the coordinator.
+- **The coordinator stamps `lastActive`** on the page after every turn that did work, so Ed sees a stall as a stale time.
+- **Whatever the coordinator is waiting on is on the page as an in-flight item** (`inflight/<project>-<slug>`): what is happening, what will land on the page when it finishes, and by when. The page shows these when nothing waits on Ed, and turns one red once its time has passed with nothing landed. Start one when the wait starts, move its time (with the reason) before it passes, close it when the promised update is posted.
 - **Ed's OK starts it**: every answer, OK and Done on the page wakes the coordinator watching it. The coordinator asks Ed to paste the page's link at the start of each session, which is what arms its watch.
 - **A coordinator schedules no check-ins of its own** and asks nothing through tool approval prompts that can expire unseen: everything that waits on Ed waits on the page.
 

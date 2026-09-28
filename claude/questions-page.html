@@ -48,6 +48,9 @@ button:focus-visible,textarea:focus-visible,a:focus-visible,label.opt:focus-with
 .wake[data-state="available"] .dot,.wake[data-state="sent"] .dot{background:var(--rec)}
 .wake[data-state="asleep"] .dot{background:var(--warn)}
 .wake[data-state="asleep"]{color:var(--warn)}
+.rearm{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:-6px 0 0}
+.rearm a,.rearm button{font:700 .92rem/1 var(--f-ui);color:var(--accent-ink);background:var(--accent);border:0;border-radius:10px;min-height:44px;padding:0 14px;display:inline-flex;align-items:center;text-decoration:none;cursor:pointer}
+.rearm .done{font-size:.85rem;color:var(--muted)}
 
 .card{background:var(--surface);border-radius:14px;box-shadow:var(--shadow);padding:20px 18px;display:flex;flex-direction:column;gap:18px}
 .card.enter{animation:enter .26s ease-out}
@@ -71,6 +74,11 @@ button:focus-visible,textarea:focus-visible,a:focus-visible,label.opt:focus-with
 .links{display:flex;flex-wrap:wrap;gap:8px}
 .links a{font-size:.88rem;font-weight:700;text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:6px 10px}
 .links a::after{content:" \2197"}
+.copies{display:flex;flex-direction:column;gap:8px}
+.copies .cp{display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:10px 14px;border-radius:12px;border:0;background:var(--accent);color:var(--accent-ink);font:700 .98rem/1.2 var(--f-ui);text-decoration:none;cursor:pointer;text-align:center}
+.copies .cp::before{content:"\29C9";font-weight:400}
+.copies .cp.copied{background:var(--rec);color:var(--surface)}
+.copies .cpnote{font-size:.85rem;color:var(--muted);margin:0;overflow-wrap:anywhere}
 
 .label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:0}
 .opts{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;border:0}
@@ -100,6 +108,25 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
 .empty .mark{width:44px;height:44px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;color:var(--rec);font-size:1.3rem}
 .empty h2{font:600 1.3rem/1.2 var(--f-head);margin:6px 0 0}
 .empty p{color:var(--muted);margin:0;max-width:40ch}
+.empty.brief{padding:28px 20px 6px}
+
+/* what coordinators are waiting on, shown when nothing waits on Ed */
+.flight{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
+.flight li{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;border-left-width:4px}
+.flight li.late{border-left-color:var(--warn)}
+.flight li.due{border-left-color:var(--rec)}
+.flight .fmeta{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:.8rem;color:var(--faint)}
+.flight .fmeta .when{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:700;color:var(--muted)}
+.flight li.late .fmeta .when{color:var(--warn)}
+.flight .ftitle{font-weight:700;line-height:1.3;margin:0}
+.flight .fnext{margin:0;font-size:.92rem;color:var(--muted)}
+.flight .fnext b{color:var(--ink);font-weight:700}
+.flight .stuck{margin:0;font-size:.9rem;color:var(--warn);font-weight:700}
+.flight .ctx{font-size:.92rem;color:var(--muted)}
+.flight .links a{font-size:.82rem;padding:5px 9px}
+.flight-head{display:flex;align-items:baseline;gap:10px;margin:8px 0 0}
+.flight-head .label{margin:0}
+.flight-head .sub{font-size:.85rem;color:var(--faint);margin:0}
 
 .hist{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
 .hist button{width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:6px;cursor:pointer;color:var(--ink);font:inherit}
@@ -122,6 +149,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     </nav>
   </header>
   <p id="wake" class="wake" role="status" hidden><span class="dot" aria-hidden="true"></span><span id="wake-text"></span></p>
+  <div id="rearm" class="rearm" hidden></div>
   <main id="main"><p class="notice">Loading questions…</p></main>
 </div>
 
@@ -148,6 +176,9 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     comments: null,           // the comments namespace, or null
     canWake: '',              // last canSendToClaude() answer
     threads: {},              // project -> threadId of that project's wake thread
+    coordinators: {},         // project -> that project's coordinator session URL
+    lastActive: {},           // project -> when its coordinator last did anything (ISO)
+    flights: new Map(),       // id -> an in-flight item: work a coordinator is waiting on
     wakeMsg: '', wakeState: '' // the outcome of the last send, shown until the next check
   };
 
@@ -185,6 +216,10 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     const o = Array.isArray(q.options) ? q.options.filter(x => x && x.key != null) : [];
     return o.filter(x => x.recommended).concat(o.filter(x => !x.recommended));
   };
+  // Text Ed must paste somewhere (a builder's brief, a setting) comes as buttons, never as a paragraph to select.
+  const copiesOf = q => (Array.isArray(q.copy) ? q.copy : [])
+    .filter(c => c && typeof c.text === 'string' && c.text)
+    .map(c => ({ label: String(c.label || ''), text: c.text, url: /^https:\/\//i.test(String(c.url || '')) ? String(c.url) : '' }));
   // An item is a question (choices), an update (read, then OK) or a task (do it, then Done).
   const kindOf = q => q.kind === 'update' || q.kind === 'task' ? q.kind : 'question';
   const isRead = q => kindOf(q) !== 'question';
@@ -198,6 +233,21 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
   function answeredList(){
     return [...S.docs.entries()].filter(([, q]) => q.status === 'answered')
       .sort(([, a], [, b]) => (Date.parse(b.answer?.at) || 0) - (Date.parse(a.answer?.at) || 0));
+  }
+  // In flight: what each coordinator is waiting on, soonest promise first (overdue ones lead).
+  function flightList(){
+    return [...S.flights.entries()].filter(([, f]) => f && f.status !== 'done')
+      .sort(([ia, a], [ib, b]) => (Date.parse(a.expectBy) || Infinity) - (Date.parse(b.expectBy) || Infinity) || ia.localeCompare(ib));
+  }
+  // "by 14:30" / "by Tue 09:00" while the promise holds; "overdue 40 min" once it has passed
+  function dueText(iso){
+    const t = Date.parse(iso); if (!t) return { late: false, text: 'no time promised' };
+    const diff = t - Date.now();
+    if (diff < -60000) return { late: true, text: 'overdue ' + ago(iso).replace(/ ago$/, '') };
+    const d = new Date(t), now = new Date();
+    const sameDay = d.toDateString() === now.toDateString();
+    const hm = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    return { late: false, text: 'by ' + (sameDay ? hm : d.toLocaleDateString(undefined, { weekday: 'short' }) + ' ' + hm) };
   }
   function pickCurrent(){
     const open = openList();
@@ -230,10 +280,55 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     else if (S.canWake === 'available') { state = 'available'; text = 'A coordinator is listening: answering wakes it.'; }
     else if (S.canWake === 'no_session') { state = 'asleep'; text = 'No coordinator is listening. Answers are saved, but nobody is woken until one watches this page.'; }
     else { state = 'off'; text = 'Answers are saved; waking a coordinator is not available in this view.'; }
+    const seen = Object.entries(S.lastActive).filter(([, a]) => Date.parse(a))
+      .map(([p, a]) => p + ' coordinator last active ' + ago(a));
+    if (seen.length) text += ' ' + seen.join(' · ') + '.';
     wakeEl.dataset.state = state;
     wakeText.textContent = text;
     wakeEl.hidden = false;
+    renderRearm(state === 'asleep');
   }
+
+  // Nobody listening: one tap copies the paste-in message and opens that project's
+  // coordinator session (each coordinator records its own link in coordinators/<project>).
+  const PAGE_URL = 'https://claude.ai/artifact/FoSoRQxMVh8cZocFpMP6KW';
+  const REARM_TEXT = 'Watch this page for wakes (dev-ops claude/QUESTIONS-PAGE.md): ' + PAGE_URL +
+    ' — then confirm your watch shows connected with auto-replies armed.';
+  const rearmEl = document.getElementById('rearm');
+  let rearmKey = '';
+  function renderRearm(show){
+    const list = show ? Object.entries(S.coordinators).filter(([, u]) => /^https:\/\/claude\.ai\//.test(u)) : [];
+    const key = show ? JSON.stringify(list) : '';
+    if (key === rearmKey) return;
+    rearmKey = key;
+    if (!show) { rearmEl.hidden = true; rearmEl.innerHTML = ''; return; }
+    rearmEl.innerHTML = (list.length
+      ? list.map(([p, u]) => '<a href="' + esc(u) + '" target="_blank" rel="noopener" data-rearm="1">Copy link, open ' + esc(p) + ' coordinator</a>').join('')
+      : '<button type="button" data-rearm="1">Copy the link for the coordinator</button>') +
+      '<span class="done" aria-live="polite"></span>';
+    rearmEl.hidden = false;
+  }
+  function copyText(t){
+    // the async clipboard can be refused inside the artifact frame; fall back to a selection copy
+    const legacy = () => {
+      const ta = document.createElement('textarea');
+      ta.value = t; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      let ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+      ta.remove(); return ok;
+    };
+    if (legacy()) return Promise.resolve(true);
+    return navigator.clipboard && navigator.clipboard.writeText
+      ? navigator.clipboard.writeText(t).then(() => true, () => false) : Promise.resolve(false);
+  }
+  rearmEl.addEventListener('click', e => {
+    const b = e.target.closest('[data-rearm]'); if (!b) return;
+    const done = rearmEl.querySelector('.done');
+    copyText(REARM_TEXT).then(ok => {
+      done.textContent = ok ? 'Copied. Paste it into the coordinator and send.'
+        : 'Could not copy. Paste this into the coordinator: ' + REARM_TEXT;
+    });
+  });
   async function refreshWake(){
     if (!S.comments) return;
     try { S.canWake = await S.comments.canSendToClaude(); } catch (e) { S.canWake = 'off'; }
@@ -319,7 +414,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     } else {
       pickCurrent();
       if (!S.currentId) {
-        key = 'empty:' + answeredList().length;
+        key = 'empty:' + answeredList().length + ':' + JSON.stringify(flightList()) + JSON.stringify(S.lastActive) + JSON.stringify(S.coordinators);
         if (!force && key === S.shownKey) return;
         html = emptyHtml();
       } else {
@@ -357,6 +452,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     const type = multi ? 'checkbox' : 'radio';
     const opts = optsOf(q);
     const links = (Array.isArray(q.links) ? q.links : []).filter(l => safeUrl(l && l.url));
+    const copies = copiesOf(q);
     const by = [q.askedBy ? esc(q.askedBy) : '', q.asked ? '<time title="' + esc(full(q.asked)) + '">' + esc(ago(q.asked)) + '</time>' : ''].filter(Boolean).join(' · ');
     const counter = mode === 'now' ? '<span class="count">' + pos + ' of ' + total + ' waiting</span>' : '<span class="count">' + (read ? esc(okWord(q)) : 'Answered') + '</span>';
     const primary = S.busy ? 'Saving…' : mode === 'edit' ? (read ? okWord(q) + ' again' : 'Update answer') : (read ? okWord(q) : 'Answer');
@@ -364,6 +460,12 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
       '<div class="meta">' + tagsHtml(q) + (by ? '<span>' + by + '</span>' : '') + counter + '</div>' +
       '<h2 class="qtitle">' + esc(q.title || (read ? 'Update' : 'Untitled question')) + '</h2>' +
       (q.context ? '<div class="ctx">' + richText(q.context) + '</div>' : '') +
+      (copies.length ? '<div class="copies">' + copies.map((c, i) => {
+          const lab = esc(c.label || 'Copy');
+          return c.url
+            ? '<a class="cp" href="' + esc(c.url) + '" target="_blank" rel="noopener" data-copy="' + i + '">' + lab + '</a>'
+            : '<button type="button" class="cp" data-copy="' + i + '">' + lab + '</button>';
+        }).join('') + '<p class="cpnote" aria-live="polite"></p></div>' : '') +
       (links.length ? '<div class="links">' + links.map(l => '<a href="' + esc(safeUrl(l.url)) + '" target="_blank" rel="noopener">' + esc(l.label || l.url) + '</a>').join('') + '</div>' : '') +
       (read ? '' :
       '<fieldset class="opts"><legend class="label" style="margin-bottom:10px">' + (multi ? 'Choose any that apply' : 'Choose one') + '</legend>' +
@@ -391,8 +493,61 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
 
   function emptyHtml(){
     const n = answeredList().length;
-    return '<div class="empty"><div class="mark" aria-hidden="true">&#10003;</div><h2>Nothing waiting</h2>' +
-      '<p>Questions, updates and tasks appear here as soon as a coordinator adds one.' + (n ? ' ' + n + ' in History.' : '') + '</p></div>';
+    const flights = flightList();
+    const hist = n ? ' ' + n + ' in History.' : '';
+    if (!flights.length) {
+      return '<div class="empty"><div class="mark" aria-hidden="true">&#10003;</div><h2>Nothing waiting for you</h2>' +
+        '<p>Nothing in flight either: no coordinator has reported work in progress. If you were expecting something, its coordinator may have stopped.' + hist + '</p></div>';
+    }
+    const late = flights.filter(([, f]) => dueText(f.expectBy).late).length;
+    const sub = flights.length + (flights.length === 1 ? ' thing' : ' things') + ' in flight' + (late ? ', ' + late + ' overdue' : '') + '.';
+    return '<div class="empty brief"><div class="mark" aria-hidden="true">&#10003;</div><h2>Nothing waiting for you</h2>' +
+      '<p>' + sub + ' Each one says what will land here, and by when.' + hist + '</p></div>' +
+      '<div class="flight-head"><p class="label">In flight</p><p class="sub">soonest first</p></div>' +
+      '<ul class="flight">' + flights.map(([id, f]) => flightHtml(id, f)).join('') + '</ul>';
+  }
+  // The one tap that restarts a stuck item: copies a message and opens the session it goes to.
+  // A coordinator can name it (`restart`); otherwise an overdue item gets a nudge to its coordinator.
+  function restartOf(id, f){
+    const r = f.restart;
+    if (r && typeof r.text === 'string' && r.text) return { label: String(r.label || 'Restart'), text: r.text, url: safeUrl(r.url) };
+    const proj = String(f.project || 'project');
+    const url = S.coordinators[projectKey(f)] || '';
+    if (!dueText(f.expectBy).late || !/^https:\/\/claude\.ai\//.test(url)) return null;
+    return {
+      label: 'Copy nudge, open ' + proj + ' coordinator',
+      text: '[questions page] inflight/' + id + ' is overdue: ' + (f.title || '') + '. Read it from the page\'s db, find where the work stands, act, and update expectBy or set status done.',
+      url
+    };
+  }
+  function flightHtml(id, f){
+    const due = dueText(f.expectBy);
+    const links = (Array.isArray(f.links) ? f.links : []).filter(l => safeUrl(l && l.url));
+    const proj = String(f.project || 'project');
+    const restart = restartOf(id, f);
+    const seen = S.lastActive[projectKey(f)];
+    const started = f.startedAt ? '<time title="' + esc(full(f.startedAt)) + '">started ' + esc(ago(f.startedAt)) + '</time>' : '';
+    const touched = f.updatedAt && f.updatedAt !== f.startedAt ? '<time title="' + esc(full(f.updatedAt)) + '">updated ' + esc(ago(f.updatedAt)) + '</time>' : '';
+    let stuck = '';
+    if (due.late) {
+      stuck = 'Nothing has landed here yet, so the coordinator is probably stuck or asleep' +
+        (seen && Date.parse(seen) ? ' (last active ' + esc(ago(seen)) + ')' : '') +
+        (restart ? '. One tap below restarts it' : links.length ? '. Check the link below' : '') + '.';
+    }
+    const restartHtml = restart ? '<div class="copies">' + (restart.url
+        ? '<a class="cp" href="' + esc(restart.url) + '" target="_blank" rel="noopener" data-fcopy="' + esc(id) + '">' + esc(restart.label) + '</a>'
+        : '<button type="button" class="cp" data-fcopy="' + esc(id) + '">' + esc(restart.label) + '</button>') +
+      '<p class="cpnote" aria-live="polite"></p></div>' : '';
+    return '<li class="' + (due.late ? 'late' : 'due') + '" data-id="' + esc(id) + '">' +
+      '<div class="fmeta"><span class="tag">' + esc(proj) + '</span>' + started + touched +
+        '<span class="when"' + (f.expectBy ? ' title="' + esc(full(f.expectBy)) + '"' : '') + '>' + esc(due.text) + '</span></div>' +
+      '<p class="ftitle">' + esc(f.title || 'Work in progress') + '</p>' +
+      (f.detail ? '<div class="ctx">' + richText(f.detail) + '</div>' : '') +
+      (f.next ? '<p class="fnext">Then: <b>' + esc(f.next) + '</b></p>' : '') +
+      (stuck ? '<p class="stuck">' + stuck + '</p>' : '') +
+      restartHtml +
+      (links.length ? '<div class="links">' + links.map(l => '<a href="' + esc(safeUrl(l.url)) + '" target="_blank" rel="noopener">' + esc(l.label || l.url) + '</a>').join('') + '</div>' : '') +
+    '</li>';
   }
 
   function summary(q){
@@ -444,6 +599,32 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     syncButton();
   });
   main.addEventListener('click', e => {
+    const fc = e.target.closest('[data-fcopy]');
+    if (fc) {
+      // an in-flight item's restart: copied inside the tap; a link-button then opens its session by itself
+      const f = S.flights.get(fc.dataset.fcopy); const r = f && restartOf(fc.dataset.fcopy, f);
+      if (!r) return;
+      const note = fc.parentElement.querySelector('.cpnote');
+      copyText(r.text).then(ok => {
+        fc.classList.toggle('copied', ok);
+        if (note) note.textContent = ok ? 'Copied' + (r.url ? ', and opened. Paste it there and send.' : '. Paste it where it goes.')
+          : 'Could not copy on this device. The text: ' + r.text;
+      });
+      return;
+    }
+    const cp = e.target.closest('[data-copy]');
+    if (cp) {
+      // copied inside the tap; a link-button then opens its page in a new tab by itself
+      const q = S.docs.get(activeId()); const c = q && copiesOf(q)[+cp.dataset.copy];
+      if (!c) return;
+      const note = cp.parentElement.querySelector('.cpnote');
+      copyText(c.text).then(ok => {
+        cp.classList.toggle('copied', ok);
+        if (note) note.textContent = ok ? 'Copied' + (c.url ? ', and opened. Paste it there and send.' : '. Paste it where it goes.')
+          : 'Could not copy on this device. The text: ' + c.text;
+      });
+      return;
+    }
     const open = e.target.closest('[data-open]');
     if (open) { S.editId = open.dataset.open; S.error = ''; S.animate = true; render(true); window.scrollTo(0, 0); return; }
     const act = e.target.closest('[data-act]')?.dataset.act; if (!act) return;
@@ -504,6 +685,21 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     S.db = db;
     db.collection('wake').onSnapshot(snap => {
       snap.docs.forEach(doc => { const t = doc.exists && doc.data().threadId; if (t) S.threads[doc.id] = t; });
+    }, () => {});
+    db.collection('coordinators').onSnapshot(snap => {
+      const next = {};
+      snap.docs.forEach(doc => { const u = doc.exists && doc.data().sessionUrl; if (u) next[doc.id] = String(u); });
+      S.coordinators = next;
+      const act = {};
+      snap.docs.forEach(doc => { const a = doc.exists && doc.data().lastActive; if (a) act[doc.id] = String(a); });
+      S.lastActive = act;
+      renderWake();
+    }, () => {});
+    db.collection('inflight').onSnapshot(snap => {
+      const next = new Map();
+      snap.docs.forEach(doc => { if (doc.exists) next.set(doc.id, doc.data()); });
+      S.flights = next;
+      if (S.ready) render(false);
     }, () => {});
     db.collection('questions').onSnapshot(snap => {
       const next = new Map();
