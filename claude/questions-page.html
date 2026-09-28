@@ -153,6 +153,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     canWake: '',              // last canSendToClaude() answer
     threads: {},              // project -> threadId of that project's wake thread
     coordinators: {},         // project -> that project's coordinator session URL
+    lastActive: {},           // project -> when its coordinator last did anything (ISO)
     wakeMsg: '', wakeState: '' // the outcome of the last send, shown until the next check
   };
 
@@ -235,6 +236,9 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     else if (S.canWake === 'available') { state = 'available'; text = 'A coordinator is listening: answering wakes it.'; }
     else if (S.canWake === 'no_session') { state = 'asleep'; text = 'No coordinator is listening. Answers are saved, but nobody is woken until one watches this page.'; }
     else { state = 'off'; text = 'Answers are saved; waking a coordinator is not available in this view.'; }
+    const seen = Object.entries(S.lastActive).filter(([, a]) => Date.parse(a))
+      .map(([p, a]) => p + ' coordinator last active ' + ago(a));
+    if (seen.length) text += ' ' + seen.join(' · ') + '.';
     wakeEl.dataset.state = state;
     wakeText.textContent = text;
     wakeEl.hidden = false;
@@ -555,7 +559,11 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     db.collection('coordinators').onSnapshot(snap => {
       const next = {};
       snap.docs.forEach(doc => { const u = doc.exists && doc.data().sessionUrl; if (u) next[doc.id] = String(u); });
-      S.coordinators = next; renderWake();
+      S.coordinators = next;
+      const act = {};
+      snap.docs.forEach(doc => { const a = doc.exists && doc.data().lastActive; if (a) act[doc.id] = String(a); });
+      S.lastActive = act;
+      renderWake();
     }, () => {});
     db.collection('questions').onSnapshot(snap => {
       const next = new Map();
