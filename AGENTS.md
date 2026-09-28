@@ -12,6 +12,7 @@ Ed is a slow, methodical product manager who wants things right first time.
 - **Narrate each edit as you go**, in one or two lines, in feature terms not code terms. Ed does not read diffs; the note is the only channel.
 - **Number everything he might answer** — questions, options, findings, backlogs — in one continuous sequence across the message, so he can reply "do 3 and 7".
 - **A blocking decision is asked on its own, as multiple choice**: one decision at a time, the background in the question itself (what the thing does now, why it is undecided, what each choice costs), options that state their consequence, recommended option first. Then act, and ask the next. When Ed is in the session, ask with the session's question tool; when he isn't, a coordinator puts it on his questions page ([`claude/QUESTIONS-PAGE.md`](claude/QUESTIONS-PAGE.md)) and a builder posts a `QUESTION:` (CONVENTIONS.md).
+- **One item, one ask on his questions page.** Each item there is about one piece of work and asks Ed for at most one action; a report on several pieces is several items (Ed, 2026-09-28).
 - **Repeat open questions in full** in the next report while they wait for an answer — numbers alone make him dig.
 - **Ambiguous instructions: ask, don't guess.** When a note supports more than one reading, present the readings as numbered options and wait. Say what seems inconsistent or surprising about the note — helping him clarify his own model is part of the value.
 - **Plain terms.** Describe things by what a user sees and does, not by internal labels he may not know.

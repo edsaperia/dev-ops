@@ -124,6 +124,11 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
 .flight .stuck{margin:0;font-size:.9rem;color:var(--warn);font-weight:700}
 .flight .ctx{font-size:.92rem;color:var(--muted)}
 .flight .links a{font-size:.82rem;padding:5px 9px}
+.quiet{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;font-size:.88rem;color:var(--muted)}
+.quiet li{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;padding:9px 2px;border-top:1px solid var(--line)}
+.quiet li:first-child{border-top:0}
+.quiet .when{margin-left:auto;color:var(--faint);font-variant-numeric:tabular-nums}
+.quiet li.stale .when{color:var(--warn)}
 .flight-head{display:flex;align-items:baseline;gap:10px;margin:8px 0 0}
 .flight-head .label{margin:0}
 .flight-head .sub{font-size:.85rem;color:var(--faint);margin:0}
@@ -491,20 +496,41 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     '</article>';
   }
 
+  // Coordinators this page knows of (they wrote coordinators/<project>) that have nothing in flight:
+  // silence is attributed to a named coordinator, never asserted as a fact about the work.
+  const STALE_MS = 2 * 3600e3;
+  function quietCoordinators(flights){
+    const busy = new Set(flights.map(([, f]) => projectKey(f)));
+    const known = new Set([...Object.keys(S.coordinators), ...Object.keys(S.lastActive)]);
+    return [...known].filter(p => !busy.has(p)).sort();
+  }
+  function quietHtml(p){
+    const seen = S.lastActive[p];
+    const t = Date.parse(seen);
+    const stale = !t || Date.now() - t > STALE_MS;
+    return '<li class="' + (stale ? 'stale' : '') + '"><span class="tag">' + esc(p) + '</span><span>' +
+      (stale ? 'nothing reported, and its coordinator has gone quiet' : 'nothing reported in flight') + '</span>' +
+      '<span class="when"' + (t ? ' title="' + esc(full(seen)) + '"' : '') + '>' + (t ? 'last active ' + esc(ago(seen)) : 'never stamped') + '</span></li>';
+  }
   function emptyHtml(){
     const n = answeredList().length;
     const flights = flightList();
+    const quiet = quietCoordinators(flights);
     const hist = n ? ' ' + n + ' in History.' : '';
+    const quietList = quiet.length ? '<ul class="quiet">' + quiet.map(quietHtml).join('') + '</ul>' : '';
     if (!flights.length) {
-      return '<div class="empty"><div class="mark" aria-hidden="true">&#10003;</div><h2>Nothing waiting for you</h2>' +
-        '<p>Nothing in flight either: no coordinator has reported work in progress. If you were expecting something, its coordinator may have stopped.' + hist + '</p></div>';
+      return '<div class="empty brief"><div class="mark" aria-hidden="true">&#10003;</div><h2>Nothing waiting for you</h2>' +
+        '<p>Nothing in flight either.' + (quiet.length
+          ? ' Each coordinator below has reported no work in progress; a stale time means it may have stopped.'
+          : ' No coordinator has made itself known to this page, so it cannot say whether work is happening.') + hist + '</p></div>' +
+        (quiet.length ? '<div class="flight-head"><p class="label">In flight</p><p class="sub">nothing reported</p></div>' + quietList : '');
     }
     const late = flights.filter(([, f]) => dueText(f.expectBy).late).length;
     const sub = flights.length + (flights.length === 1 ? ' thing' : ' things') + ' in flight' + (late ? ', ' + late + ' overdue' : '') + '.';
     return '<div class="empty brief"><div class="mark" aria-hidden="true">&#10003;</div><h2>Nothing waiting for you</h2>' +
       '<p>' + sub + ' Each one says what will land here, and by when.' + hist + '</p></div>' +
       '<div class="flight-head"><p class="label">In flight</p><p class="sub">soonest first</p></div>' +
-      '<ul class="flight">' + flights.map(([id, f]) => flightHtml(id, f)).join('') + '</ul>';
+      '<ul class="flight">' + flights.map(([id, f]) => flightHtml(id, f)).join('') + '</ul>' + quietList;
   }
   // The one tap that restarts a stuck item: copies a message and opens the session it goes to.
   // A coordinator can name it (`restart`); otherwise an overdue item gets a nudge to its coordinator.
