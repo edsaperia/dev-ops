@@ -108,6 +108,25 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
 .empty .mark{width:44px;height:44px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;color:var(--rec);font-size:1.3rem}
 .empty h2{font:600 1.3rem/1.2 var(--f-head);margin:6px 0 0}
 .empty p{color:var(--muted);margin:0;max-width:40ch}
+.empty.brief{padding:28px 20px 6px}
+
+/* what coordinators are waiting on, shown when nothing waits on Ed */
+.flight{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
+.flight li{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;border-left-width:4px}
+.flight li.late{border-left-color:var(--warn)}
+.flight li.due{border-left-color:var(--rec)}
+.flight .fmeta{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:.8rem;color:var(--faint)}
+.flight .fmeta .when{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:700;color:var(--muted)}
+.flight li.late .fmeta .when{color:var(--warn)}
+.flight .ftitle{font-weight:700;line-height:1.3;margin:0}
+.flight .fnext{margin:0;font-size:.92rem;color:var(--muted)}
+.flight .fnext b{color:var(--ink);font-weight:700}
+.flight .stuck{margin:0;font-size:.9rem;color:var(--warn);font-weight:700}
+.flight .ctx{font-size:.92rem;color:var(--muted)}
+.flight .links a{font-size:.82rem;padding:5px 9px}
+.flight-head{display:flex;align-items:baseline;gap:10px;margin:8px 0 0}
+.flight-head .label{margin:0}
+.flight-head .sub{font-size:.85rem;color:var(--faint);margin:0}
 
 .hist{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
 .hist button{width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:6px;cursor:pointer;color:var(--ink);font:inherit}
@@ -159,6 +178,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     threads: {},              // project -> threadId of that project's wake thread
     coordinators: {},         // project -> that project's coordinator session URL
     lastActive: {},           // project -> when its coordinator last did anything (ISO)
+    flights: new Map(),       // id -> an in-flight item: work a coordinator is waiting on
     wakeMsg: '', wakeState: '' // the outcome of the last send, shown until the next check
   };
 
@@ -213,6 +233,21 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
   function answeredList(){
     return [...S.docs.entries()].filter(([, q]) => q.status === 'answered')
       .sort(([, a], [, b]) => (Date.parse(b.answer?.at) || 0) - (Date.parse(a.answer?.at) || 0));
+  }
+  // In flight: what each coordinator is waiting on, soonest promise first (overdue ones lead).
+  function flightList(){
+    return [...S.flights.entries()].filter(([, f]) => f && f.status !== 'done')
+      .sort(([ia, a], [ib, b]) => (Date.parse(a.expectBy) || Infinity) - (Date.parse(b.expectBy) || Infinity) || ia.localeCompare(ib));
+  }
+  // "by 14:30" / "by Tue 09:00" while the promise holds; "overdue 40 min" once it has passed
+  function dueText(iso){
+    const t = Date.parse(iso); if (!t) return { late: false, text: 'no time promised' };
+    const diff = t - Date.now();
+    if (diff < -60000) return { late: true, text: 'overdue ' + ago(iso).replace(/ ago$/, '') };
+    const d = new Date(t), now = new Date();
+    const sameDay = d.toDateString() === now.toDateString();
+    const hm = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    return { late: false, text: 'by ' + (sameDay ? hm : d.toLocaleDateString(undefined, { weekday: 'short' }) + ' ' + hm) };
   }
   function pickCurrent(){
     const open = openList();
@@ -379,7 +414,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     } else {
       pickCurrent();
       if (!S.currentId) {
-        key = 'empty:' + answeredList().length;
+        key = 'empty:' + answeredList().length + ':' + JSON.stringify(flightList()) + JSON.stringify(S.lastActive) + JSON.stringify(S.coordinators);
         if (!force && key === S.shownKey) return;
         html = emptyHtml();
       } else {
@@ -458,8 +493,61 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
 
   function emptyHtml(){
     const n = answeredList().length;
-    return '<div class="empty"><div class="mark" aria-hidden="true">&#10003;</div><h2>Nothing waiting</h2>' +
-      '<p>Questions, updates and tasks appear here as soon as a coordinator adds one.' + (n ? ' ' + n + ' in History.' : '') + '</p></div>';
+    const flights = flightList();
+    const hist = n ? ' ' + n + ' in History.' : '';
+    if (!flights.length) {
+      return '<div class="empty"><div class="mark" aria-hidden="true">&#10003;</div><h2>Nothing waiting for you</h2>' +
+        '<p>Nothing in flight either: no coordinator has reported work in progress. If you were expecting something, its coordinator may have stopped.' + hist + '</p></div>';
+    }
+    const late = flights.filter(([, f]) => dueText(f.expectBy).late).length;
+    const sub = flights.length + (flights.length === 1 ? ' thing' : ' things') + ' in flight' + (late ? ', ' + late + ' overdue' : '') + '.';
+    return '<div class="empty brief"><div class="mark" aria-hidden="true">&#10003;</div><h2>Nothing waiting for you</h2>' +
+      '<p>' + sub + ' Each one says what will land here, and by when.' + hist + '</p></div>' +
+      '<div class="flight-head"><p class="label">In flight</p><p class="sub">soonest first</p></div>' +
+      '<ul class="flight">' + flights.map(([id, f]) => flightHtml(id, f)).join('') + '</ul>';
+  }
+  // The one tap that restarts a stuck item: copies a message and opens the session it goes to.
+  // A coordinator can name it (`restart`); otherwise an overdue item gets a nudge to its coordinator.
+  function restartOf(id, f){
+    const r = f.restart;
+    if (r && typeof r.text === 'string' && r.text) return { label: String(r.label || 'Restart'), text: r.text, url: safeUrl(r.url) };
+    const proj = String(f.project || 'project');
+    const url = S.coordinators[projectKey(f)] || '';
+    if (!dueText(f.expectBy).late || !/^https:\/\/claude\.ai\//.test(url)) return null;
+    return {
+      label: 'Copy nudge, open ' + proj + ' coordinator',
+      text: '[questions page] inflight/' + id + ' is overdue: ' + (f.title || '') + '. Read it from the page\'s db, find where the work stands, act, and update expectBy or set status done.',
+      url
+    };
+  }
+  function flightHtml(id, f){
+    const due = dueText(f.expectBy);
+    const links = (Array.isArray(f.links) ? f.links : []).filter(l => safeUrl(l && l.url));
+    const proj = String(f.project || 'project');
+    const restart = restartOf(id, f);
+    const seen = S.lastActive[projectKey(f)];
+    const started = f.startedAt ? '<time title="' + esc(full(f.startedAt)) + '">started ' + esc(ago(f.startedAt)) + '</time>' : '';
+    const touched = f.updatedAt && f.updatedAt !== f.startedAt ? '<time title="' + esc(full(f.updatedAt)) + '">updated ' + esc(ago(f.updatedAt)) + '</time>' : '';
+    let stuck = '';
+    if (due.late) {
+      stuck = 'Nothing has landed here yet, so the coordinator is probably stuck or asleep' +
+        (seen && Date.parse(seen) ? ' (last active ' + esc(ago(seen)) + ')' : '') +
+        (restart ? '. One tap below restarts it' : links.length ? '. Check the link below' : '') + '.';
+    }
+    const restartHtml = restart ? '<div class="copies">' + (restart.url
+        ? '<a class="cp" href="' + esc(restart.url) + '" target="_blank" rel="noopener" data-fcopy="' + esc(id) + '">' + esc(restart.label) + '</a>'
+        : '<button type="button" class="cp" data-fcopy="' + esc(id) + '">' + esc(restart.label) + '</button>') +
+      '<p class="cpnote" aria-live="polite"></p></div>' : '';
+    return '<li class="' + (due.late ? 'late' : 'due') + '" data-id="' + esc(id) + '">' +
+      '<div class="fmeta"><span class="tag">' + esc(proj) + '</span>' + started + touched +
+        '<span class="when"' + (f.expectBy ? ' title="' + esc(full(f.expectBy)) + '"' : '') + '>' + esc(due.text) + '</span></div>' +
+      '<p class="ftitle">' + esc(f.title || 'Work in progress') + '</p>' +
+      (f.detail ? '<div class="ctx">' + richText(f.detail) + '</div>' : '') +
+      (f.next ? '<p class="fnext">Then: <b>' + esc(f.next) + '</b></p>' : '') +
+      (stuck ? '<p class="stuck">' + stuck + '</p>' : '') +
+      restartHtml +
+      (links.length ? '<div class="links">' + links.map(l => '<a href="' + esc(safeUrl(l.url)) + '" target="_blank" rel="noopener">' + esc(l.label || l.url) + '</a>').join('') + '</div>' : '') +
+    '</li>';
   }
 
   function summary(q){
@@ -511,6 +599,19 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     syncButton();
   });
   main.addEventListener('click', e => {
+    const fc = e.target.closest('[data-fcopy]');
+    if (fc) {
+      // an in-flight item's restart: copied inside the tap; a link-button then opens its session by itself
+      const f = S.flights.get(fc.dataset.fcopy); const r = f && restartOf(fc.dataset.fcopy, f);
+      if (!r) return;
+      const note = fc.parentElement.querySelector('.cpnote');
+      copyText(r.text).then(ok => {
+        fc.classList.toggle('copied', ok);
+        if (note) note.textContent = ok ? 'Copied' + (r.url ? ', and opened. Paste it there and send.' : '. Paste it where it goes.')
+          : 'Could not copy on this device. The text: ' + r.text;
+      });
+      return;
+    }
     const cp = e.target.closest('[data-copy]');
     if (cp) {
       // copied inside the tap; a link-button then opens its page in a new tab by itself
@@ -593,6 +694,12 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
       snap.docs.forEach(doc => { const a = doc.exists && doc.data().lastActive; if (a) act[doc.id] = String(a); });
       S.lastActive = act;
       renderWake();
+    }, () => {});
+    db.collection('inflight').onSnapshot(snap => {
+      const next = new Map();
+      snap.docs.forEach(doc => { if (doc.exists) next.set(doc.id, doc.data()); });
+      S.flights = next;
+      if (S.ready) render(false);
     }, () => {});
     db.collection('questions').onSnapshot(snap => {
       const next = new Map();
