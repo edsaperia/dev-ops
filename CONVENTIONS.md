@@ -42,7 +42,9 @@ A coordinator sleeps between messages, and nothing on GitHub wakes it (2026-09-2
 - **The coordinator stamps `lastActive`** on the page after every turn that did work, so Ed sees a stall as a stale time.
 - **Whatever the coordinator is waiting on is on the page as an in-flight item** (`inflight/<project>-<slug>`): what is happening, what will land on the page when it finishes, and by when. The page shows these when nothing waits on Ed, and turns one red once its time has passed with nothing landed. Start one when the wait starts, move its time (with the reason) before it passes, close it when the promised update is posted.
 - **Ed's OK starts it**: every answer, OK and Done on the page wakes the coordinator watching it. The coordinator asks Ed to paste the page's link at the start of each session, which is what arms its watch.
+- **One item, one ask**: each item on the page is about one piece of work and asks Ed for at most one action; a report on several pieces is several items (Ed, 2026-09-28).
 - **A coordinator schedules no check-ins of its own** and asks nothing through tool approval prompts that can expire unseen: everything that waits on Ed waits on the page.
+- **The contract changes while coordinators run, so every wake re-reads it**: at the start of every turn that does coordinator work, read this file and `claude/QUESTIONS-PAGE.md` from `edsaperia/dev-ops` `main` (the GitHub tool, not the container's checkout, which is from session start) and follow what they say now. Whoever merges a change to either file pokes every running coordinator listed in the page's `coordinators` collection: a message into its session (a one-shot Routine bound to that session with the change as its prompt, fired, then deleted) naming the section that changed. (Ed, 2026-09-28: the draft coordinator, started two days earlier, never saw the in-flight contract.)
 
 ## Precedence
 
