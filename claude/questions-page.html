@@ -48,6 +48,9 @@ button:focus-visible,textarea:focus-visible,a:focus-visible,label.opt:focus-with
 .wake[data-state="available"] .dot,.wake[data-state="sent"] .dot{background:var(--rec)}
 .wake[data-state="asleep"] .dot{background:var(--warn)}
 .wake[data-state="asleep"]{color:var(--warn)}
+.rearm{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:-6px 0 0}
+.rearm a,.rearm button{font:700 .92rem/1 var(--f-ui);color:var(--accent-ink);background:var(--accent);border:0;border-radius:10px;min-height:44px;padding:0 14px;display:inline-flex;align-items:center;text-decoration:none;cursor:pointer}
+.rearm .done{font-size:.85rem;color:var(--muted)}
 
 .card{background:var(--surface);border-radius:14px;box-shadow:var(--shadow);padding:20px 18px;display:flex;flex-direction:column;gap:18px}
 .card.enter{animation:enter .26s ease-out}
@@ -122,6 +125,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     </nav>
   </header>
   <p id="wake" class="wake" role="status" hidden><span class="dot" aria-hidden="true"></span><span id="wake-text"></span></p>
+  <div id="rearm" class="rearm" hidden></div>
   <main id="main"><p class="notice">Loading questions…</p></main>
 </div>
 
@@ -148,6 +152,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     comments: null,           // the comments namespace, or null
     canWake: '',              // last canSendToClaude() answer
     threads: {},              // project -> threadId of that project's wake thread
+    coordinators: {},         // project -> that project's coordinator session URL
     wakeMsg: '', wakeState: '' // the outcome of the last send, shown until the next check
   };
 
@@ -233,7 +238,49 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     wakeEl.dataset.state = state;
     wakeText.textContent = text;
     wakeEl.hidden = false;
+    renderRearm(state === 'asleep');
   }
+
+  // Nobody listening: one tap copies the paste-in message and opens that project's
+  // coordinator session (each coordinator records its own link in coordinators/<project>).
+  const PAGE_URL = 'https://claude.ai/artifact/FoSoRQxMVh8cZocFpMP6KW';
+  const REARM_TEXT = 'Watch this page for wakes (dev-ops claude/QUESTIONS-PAGE.md): ' + PAGE_URL +
+    ' — then confirm your watch shows connected with auto-replies armed.';
+  const rearmEl = document.getElementById('rearm');
+  let rearmKey = '';
+  function renderRearm(show){
+    const list = show ? Object.entries(S.coordinators).filter(([, u]) => /^https:\/\/claude\.ai\//.test(u)) : [];
+    const key = show ? JSON.stringify(list) : '';
+    if (key === rearmKey) return;
+    rearmKey = key;
+    if (!show) { rearmEl.hidden = true; rearmEl.innerHTML = ''; return; }
+    rearmEl.innerHTML = (list.length
+      ? list.map(([p, u]) => '<a href="' + esc(u) + '" target="_blank" rel="noopener" data-rearm="1">Copy link, open ' + esc(p) + ' coordinator</a>').join('')
+      : '<button type="button" data-rearm="1">Copy the link for the coordinator</button>') +
+      '<span class="done" aria-live="polite"></span>';
+    rearmEl.hidden = false;
+  }
+  function copyText(t){
+    // the async clipboard can be refused inside the artifact frame; fall back to a selection copy
+    const legacy = () => {
+      const ta = document.createElement('textarea');
+      ta.value = t; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      let ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+      ta.remove(); return ok;
+    };
+    if (legacy()) return Promise.resolve(true);
+    return navigator.clipboard && navigator.clipboard.writeText
+      ? navigator.clipboard.writeText(t).then(() => true, () => false) : Promise.resolve(false);
+  }
+  rearmEl.addEventListener('click', e => {
+    const b = e.target.closest('[data-rearm]'); if (!b) return;
+    const done = rearmEl.querySelector('.done');
+    copyText(REARM_TEXT).then(ok => {
+      done.textContent = ok ? 'Copied. Paste it into the coordinator and send.'
+        : 'Could not copy. Paste this into the coordinator: ' + REARM_TEXT;
+    });
+  });
   async function refreshWake(){
     if (!S.comments) return;
     try { S.canWake = await S.comments.canSendToClaude(); } catch (e) { S.canWake = 'off'; }
@@ -504,6 +551,11 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     S.db = db;
     db.collection('wake').onSnapshot(snap => {
       snap.docs.forEach(doc => { const t = doc.exists && doc.data().threadId; if (t) S.threads[doc.id] = t; });
+    }, () => {});
+    db.collection('coordinators').onSnapshot(snap => {
+      const next = {};
+      snap.docs.forEach(doc => { const u = doc.exists && doc.data().sessionUrl; if (u) next[doc.id] = String(u); });
+      S.coordinators = next; renderWake();
     }, () => {});
     db.collection('questions').onSnapshot(snap => {
       const next = new Map();

@@ -31,6 +31,8 @@ The page only ever `update`s `status` and `answer`, never anything else. Ed can 
 
 The page's one other write is `wake/<project>`, `{threadId, at}`: the comment thread it reuses to wake that project's coordinator (below). Coordinators never write it.
 
+A coordinator writes `coordinators/<project>`, `{sessionUrl, at, by}`: the `https://claude.ai/code/session_…` link of the session currently coordinating that project (below). The page only reads it.
+
 ## How a coordinator asks a question
 
 `ArtifactData` with `action: "set"`, `url` the page above, `collection: "questions"`, `doc_id: "<project>-<number>"`, and `data` holding every coordinator field above with `status: "open"` and no `answer`. The page is live: if Ed has it open, the question appears at once.
@@ -49,7 +51,9 @@ To withdraw a question that no longer needs Ed: `update` with `{"status": "withd
 
 A session asleep between messages cannot poll, so the page rings instead. **Every answer, OK and Done also posts a comment to Claude on the page** (`sendToClaude`, one reused thread per project, anchored at the title). The comment names the item, the answer and the note, and asks the coordinator of that project to read `questions/<id>`, act, and set `handledAt`. It wakes every Claude session watching the page with auto-replies armed; a coordinator of another project ignores it. The database stays the record: act on what `questions/<id>` says, not on the comment's text.
 
-**A coordinator must watch the page, and only Ed can arm it**: a session arms a watch only on a link Ed pasted into that session himself. So at the start of every coordinator session, ask Ed to paste `https://claude.ai/artifact/FoSoRQxMVh8cZocFpMP6KW` into it; then call `ArtifactComments` with `action: "watch"` and that `url`, and check that the watch listing (`action: "watch"`, no `url`) shows the page *connected* with *auto-replies armed*. A restarted container loses the watch: ask for the link again.
+**A coordinator must watch the page, and only Ed can arm it**: a session arms a watch only on a link Ed pasted into that session himself. So at the start of every coordinator session, ask Ed to paste `https://claude.ai/artifact/FoSoRQxMVh8cZocFpMP6KW` into it; then call `ArtifactComments` with `action: "watch"` and that `url`, and check that the watch listing (`action: "watch"`, no `url`) shows the page *connected* with *auto-replies armed*. A restarted container loses the watch: ask for the link again. Once armed, `set` `coordinators/<project>` with your own session link, so the page can send Ed back to you.
+
+When no coordinator is listening, the page shows a button per project in `coordinators`: one tap copies the paste-in message (the page link and *confirm your watch is armed*) and opens that coordinator's session, where Ed pastes and sends.
 
 Ed sees whether it worked. A line under the page's title says whether a coordinator is listening, and after each press it says *Saved and sent to the coordinator.* or *Saved. No coordinator was listening, so nobody was woken.*
 
