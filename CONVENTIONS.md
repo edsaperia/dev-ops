@@ -53,3 +53,5 @@ An explicit instruction in a brief or `COORDINATOR:` comment overrides these def
 ## Decisions
 
 A builder that must choose something Ed has not ruled makes the call, keeps going, and lists it in `FINAL:`. Ed rules those afterwards, one at a time. Questions that block the work are `QUESTION:` comments and wait.
+
+**A decision taken on Ed's behalf is shown to him.** When a coordinator answers a builder's `QUESTION:` itself, or accepts a call listed in a `FINAL:`, because an existing ruling settles it, it also posts an OK-only *update* on Ed's questions page: what it decided, for which builder and PR, and which ruling settles it (see `claude/QUESTIONS-PAGE.md`, *Decisions taken on Ed's behalf*). Ed's OK costs one tap; his note is a veto, and the coordinator acts on it. A decision no ruling settles is not the coordinator's to take: it goes to the page as a question. (Ed, 2026-09-29: he was rarely asked anything through the page, and could not see what had been decided without him.)
