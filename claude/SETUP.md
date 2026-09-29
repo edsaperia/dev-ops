@@ -25,7 +25,7 @@ Safety, by design of `anthropics/claude-code-action`: only people with write acc
 ## B. Cloud sessions — once per project
 
 1. At claude.ai/code, open the environment settings used for the repo.
-2. **Network**: *Custom* — keep the default trusted list, add whatever the project downloads outside it (e.g. `cdn.playwright.dev` for Playwright browsers).
+2. **Network**: *Custom* — keep the default trusted list, add whatever the project downloads outside it (e.g. `cdn.playwright.dev` for Playwright browsers). Tick **Also include default list of common package managers** — unticked, npm and pip installs fail with 403 "Host not in allowlist".
 3. **Setup script**: runs *before the repo is cloned*, so install only repo-independent things (e.g. `npx -y playwright@<exact version> install chromium`); the builder runs the project's own install itself. **Keep any version pinned here in step with the project.**
 4. To use one: open a session on the repo with the message *You are a builder. Wait for your brief, which will arrive as the next message.* and give the link to the coordinator.
 
