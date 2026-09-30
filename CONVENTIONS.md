@@ -32,6 +32,7 @@ All agents may post as Ed's GitHub account; the prefix says who is speaking.
 
 - **`@claude` in an issue or PR comment** (by someone with write access) starts a Claude builder on a GitHub Actions runner in any repo wired up per [`claude/SETUP.md`](claude/SETUP.md). It reads the project's `CLAUDE.md`, this file and `AGENTS.md`, pushes a `claude/…` branch, and comments a link to open the PR.
 - A cloud session (claude.ai/code) is woken by a message; a coordinator posts the instruction as a `COORDINATOR:` comment first, then sends the one-line nudge *read the latest COORDINATOR comment on your PR and act on it*.
+- **Every cloud session runs in Auto mode**, coordinator or builder, chosen in the session's mode menu at the start (or switched while it runs). A session in the default mode asks Ed for one-off approvals that the repo's settings file cannot all suppress (`claude/SETUP.md` B5; Ed, 2026-09-30). A session that is asking for permission is a session that was opened in the wrong mode.
 
 ## Waking a coordinator: Ed's questions page
 

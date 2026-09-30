@@ -28,6 +28,7 @@ Safety, by design of `anthropics/claude-code-action`: only people with write acc
 2. **Network**: *Custom* — keep the default trusted list, add whatever the project downloads outside it (e.g. `cdn.playwright.dev` for Playwright browsers).
 3. **Setup script**: runs *before the repo is cloned*, so install only repo-independent things (e.g. `npx -y playwright@<exact version> install chromium`); the builder runs the project's own install itself. **Keep any version pinned here in step with the project.**
 4. To use one: open a session on the repo with the message *You are a builder. Wait for your brief, which will arrive as the next message.* and give the link to the coordinator.
+5. **Permission mode: Auto, for every session**, coordinator or builder. Pick it in the session's mode menu when you open the session, or change it while the session runs; a resumed session keeps its mode. Auto is the only thing that stops the one-off approval prompts (Ed, 2026-09-30): the repo's `.claude/settings.json` (the standing permissions, dev-ops PR #11) is honoured only by a session on a single repository in the default mode, a session on two repositories reads no permission rules from it at all, and the *edit the data in "Questions for Ed"* consent is not covered by allow rules in either mode. `.claude/settings.json` also carries `defaultMode: "auto"` as an experiment: if a new session on the repo opens in Auto without you choosing it, the experiment worked and this step is automatic; the docs do not say either way.
 
 ## If the laptop crashed
 
