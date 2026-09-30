@@ -4,7 +4,11 @@ The page where coordinators on Ed's projects put questions only Ed can answer, a
 
 - **Page:** https://claude.ai/artifact/FoSoRQxMVh8cZocFpMP6KW — also at **https://edsaperia.github.io/dev-ops/q/** (a forwarding page, `q/index.html`)
 - **Access:** private to Ed (the owner). The database rules are read `owner`, write `owner` at the root, so nobody else can read or write it, even if the page is shared. A coordinator reaches it only through the `ArtifactData` tool acting as Ed, in a session Ed runs.
-- **Published:** 2026-09-26; republished 2026-09-28 with the wake (below) and again 2026-09-28 with the in-flight list (below): contract 0.2.61, capabilities `db` (rules above), `user` and `comments`. The `comments` capability makes the page organization-internal: it can no longer be shared by public link.
+- **Published:** 2026-09-26; contract 0.2.61, capabilities `db` (rules above), `user` and `comments`. The `comments` capability makes the page organization-internal: it can no longer be shared by public link. Republished:
+  - 2026-09-28: the wake (below).
+  - 2026-09-28: the in-flight list (below).
+  - 2026-09-30 (commit c85e824, version 10): a task's first link as a large button.
+  - 2026-09-30 (v11): *Probably stuck* above open items, each coordinator's last-active line always shown, a coordinator's `restart` only once late, lists after a line of text, `https://` links only.
 - **Source:** [`questions-page.html`](questions-page.html) in this folder is the published page. Change it here, republish it with the Artifact tool (`url` the page above, capabilities restated in full — `{"db":{"rules":[{"path":"","read":"owner","write":"owner"}]},"user":{},"comments":{}}` — since a publish that names capabilities replaces the whole set), and commit the file in the same PR.
 
 ## The collection: `questions`
@@ -19,14 +23,16 @@ One document per item. An item is a **question** (choose among options), an **up
 | `title` | string | coordinator | short: the question in one line |
 | `asked` | ISO datetime | coordinator | when it was asked; the queue is oldest first by this |
 | `askedBy` | string | coordinator | e.g. `coordinator (cloud)` |
-| `context` | string | coordinator | plain text, several paragraphs allowed: what the thing does now, why it is undecided, what each choice costs. Blank line = new paragraph; lines starting `- ` form a list; `` `code` ``, `**bold**` and bare `https://` links render |
-| `options` | array of `{key, label, description, recommended?}` | coordinator | the choices. The first is the recommendation and carries `recommended: true` (the page also moves any recommended option to the top). `description` is the one-line consequence. `key` is what comes back in the answer |
+| `context` | string | coordinator | plain text, several paragraphs allowed: what the thing does now, why it is undecided, what each choice costs. Blank line = new paragraph; lines starting `- ` (or `* `) form a list, and a list may follow a line or two of text in the same paragraph (the text first, the list from its first `- ` line on); `` `code` ``, `**bold**` and bare `https://` links render |
+| `options` | array of `{key, label, description, recommended?}` | coordinator | the choices. The first is the recommendation and carries `recommended: true` (the page also moves any recommended option to the top). On a `multi` question more than one option may carry `recommended: true`; all of them move to the top, in their order, each marked *Recommended*. `description` is the one-line consequence. `key` is what comes back in the answer |
 | `multi` | bool | coordinator | `true` lets Ed pick several; default `false` |
 | `links` | array of `{label, url}` | coordinator | optional; `https://` only (a PR, a screenshot). **On a task with no `copy`, the first link is the place Ed must go**, and the page shows it as a large button above the small ones, the size of *Done* (Ed, 2026-09-30: *if my task is to open a link and press a button there, the link should be a large button, not a small one*). Put the PR to merge, the session to open, first; the rest stay small |
 | `copy` | array of `{label, text, url?}` | coordinator | optional. **Anything Ed must paste somewhere goes here, never in `context`** (Ed, 2026-09-28: *a button that puts the text on my clipboard instead of text in a paragraph I need to select*): each entry is a button labelled `label` that copies `text` to his clipboard, and with `url` (`https://` only) also opens that page in the same tap — e.g. `{label: "Copy the brief, open the builder", text: "<the brief>", url: "https://claude.ai/code/session_…"}`. `context` says what the text is for, not the text itself |
 | `status` | `"open"` \| `"answered"` \| `"withdrawn"` | both | `open` when asked; the page sets `answered`; a coordinator sets `withdrawn` to take a question back |
 | `answer` | `{keys: [..], other: string, note: string, at: ISO}` | page | Ed's answer. `keys` are option keys (may be empty when he wrote only *Other*); for an update it is `["ok"]`, for a task `["done"]`; `other` is his own answer text or `""`; `note` is his note (or reply) to you or `""` |
 | `handledAt` | ISO datetime | coordinator | optional: set once the coordinator has acted on the answer |
+
+With more than one item waiting, a **Later** button beside the main one skips to the next waiting item, oldest first. The skipped item goes behind the others for this visit only: once every waiting item has been skipped, the page starts again from the oldest. Nothing is saved, so a reload shows the queue in `asked` order again.
 
 The page only ever `update`s `status` and `answer`, never anything else. Ed can change an answer later from History: that rewrites `answer` (with a new `at`) and leaves `status` as `answered`. Withdrawn questions are not shown anywhere on the page.
 
@@ -56,7 +62,16 @@ A session asleep between messages cannot poll, so the page rings instead. **Ever
 
 When no coordinator is listening, the page shows a button per project in `coordinators`: one tap copies the paste-in message (the page link and *confirm your watch is armed*) and opens that coordinator's session, where Ed pastes and sends.
 
-Ed sees whether it worked. A line under the page's title says whether a coordinator is listening, and after each press it says *Saved and sent to the coordinator.* or *Saved. No coordinator was listening, so nobody was woken.*
+Ed sees whether it worked. A line under the page's title says whether **at least one** coordinator is listening. After each press it says, for 15 seconds, one of:
+
+- *Saved and sent to the coordinator.*
+- *Saved. No coordinator was listening, so nobody was woken.*
+- *Saved. Waking the coordinator needs this page to comment as you; allow it when asked.* (Ed has not yet let the page comment as him)
+- *Saved, but the coordinator could not be woken (‹reason›).*
+
+When the comments feature does not load in the view, the line is not shown and nothing is said after a press; the answer is saved either way.
+
+**Listening is page-wide, not per coordinator.** The platform tells the page only whether some Claude session could receive a comment right now (`canSendToClaude`: available, no session, off); it has no way to say which sessions, or how many, are watching (checked against runtime contract 0.2.66, 2026-09-30). So the page does not claim a coordinator is listening per project. Instead, under that line it lists every project in `coordinators` as *‹project› coordinator last active 3 h ago*, red once that is over two hours old. These lines come from the page's database, not from the comments feature, so they show even when comments cannot load.
 
 When woken: the platform may already have posted a short auto-reply in the thread. Do the work the answer asks for, set `handledAt`, and optionally reply in the thread with what you started. **Never resolve a project's wake thread**: the page reuses it.
 
@@ -80,12 +95,14 @@ When nothing waits on Ed, the page shows what each coordinator is waiting on, so
 | `next` | string | what will land on this page when the work finishes: *An update: PR #1571 finished, OK to review* |
 | `links` | array of `{label, url}` | optional; `https://` only: the PR, the run, the session, so Ed can go and look when it is overdue |
 | `updatedAt` | ISO datetime | when the coordinator last touched this item |
-| `restart` | `{label, text, url?}` | optional: **the one tap that restarts this if it sticks**, like `copy` on a question: a button labelled `label` that copies `text` and, with `url` (`https://` only), opens that page in the same tap, e.g. *Copy nudge, open the builder* with the builder's session link and *read the latest COORDINATOR comment on your PR and act on it*. Without it, an overdue item gets a default button that copies a nudge naming `inflight/<id>` and opens the project's coordinator session from `coordinators/<project>` (Ed, 2026-09-28: *if I have to restart something manually, make it as few clicks as possible*) |
+| `restart` | `{label, text, url?}` | optional: **the one tap that restarts this if it sticks**, like `copy` on a question: a button labelled `label` that copies `text` and, with `url` (`https://` only), opens that page in the same tap, e.g. *Copy nudge, open the builder* with the builder's session link and *read the latest COORDINATOR comment on your PR and act on it*. The button shows only once the item is overdue (past `expectBy`); before then the item shows no button. Without `restart`, an overdue item gets a default button that copies a nudge naming `inflight/<id>` and opens the project's coordinator session from `coordinators/<project>` (Ed, 2026-09-28: *if I have to restart something manually, make it as few clicks as possible*) |
 | `status` | `"active"` \| `"done"` | `done` items are hidden; delete them once their update is answered |
 
 **Duties.** A coordinator `set`s an item the moment it starts something it will wait on (briefing a builder, starting a deploy, waiting for a check), with an honest `expectBy` (a builder's pass is hours, a deploy minutes). If the promise slips, `update` `expectBy` and `updatedAt` and say why in `detail` before the old time passes, never after. When the promised item lands on the page, `update` `status: "done"` in the same turn (or delete the document). An item nobody closes is the signal: the page keeps showing it, and turns it red when its time passes.
 
-The page sorts items soonest promise first, so overdue items lead. Silence is attributed, never asserted: every coordinator the page knows of (it wrote `coordinators/<project>`) that has no open item is listed by name as *nothing reported in flight* with its `lastActive` time, red once that is over two hours old (Ed, 2026-09-28: the page said nothing was in flight while draft had two builders running; the draft coordinator had simply not written any). So a coordinator that does not write in-flight items shows on Ed's phone as a coordinator that has reported nothing, not as a project with nothing happening.
+**Probably stuck.** While items wait on Ed, the in-flight list is not shown, but anything late still is: above the item Ed is answering, a strip titled *Probably stuck* lists each overdue in-flight item (red, without its `detail`, with its one-tap restart) and each coordinator with nothing in flight whose last-active time is over two hours old or missing, with its nudge button when it has a session link. When nothing is late, there is no strip. The full in-flight list shows only when nothing waits on Ed.
+
+The page sorts items soonest promise first, so overdue items lead. Silence is attributed, never asserted: every coordinator the page knows of (it wrote `coordinators/<project>`) that has no open item is listed by name as *nothing reported in flight* with its `lastActive` time, red once that is over two hours old (or never stamped), and then with the same one tap as an overdue item when `coordinators/<project>` has a session link: *Copy nudge, open ‹project› coordinator* copies a nudge (*put whatever you are waiting on in flight, or ask what next on the page*) and opens that session (Ed, 2026-09-28: the page said nothing was in flight while draft had two builders running; the draft coordinator had simply not written any). So a coordinator that does not write in-flight items shows on Ed's phone as a coordinator that has reported nothing, not as a project with nothing happening.
 
 ## One item, one ask
 

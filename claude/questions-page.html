@@ -48,6 +48,9 @@ button:focus-visible,textarea:focus-visible,a:focus-visible,label.opt:focus-with
 .wake[data-state="available"] .dot,.wake[data-state="sent"] .dot{background:var(--rec)}
 .wake[data-state="asleep"] .dot{background:var(--warn)}
 .wake[data-state="asleep"]{color:var(--warn)}
+.seen{list-style:none;margin:-10px 0 0;padding:0 0 0 16px;font-size:.85rem;color:var(--muted);display:flex;flex-direction:column;gap:2px}
+.seen li.stale{color:var(--warn)}
+.wake[hidden] + .seen{margin-top:0}
 .rearm{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:-6px 0 0}
 .rearm a,.rearm button{font:700 .92rem/1 var(--f-ui);color:var(--accent-ink);background:var(--accent);border:0;border-radius:10px;min-height:44px;padding:0 14px;display:inline-flex;align-items:center;text-decoration:none;cursor:pointer}
 .rearm .done{font-size:.85rem;color:var(--muted)}
@@ -78,6 +81,7 @@ button:focus-visible,textarea:focus-visible,a:focus-visible,label.opt:focus-with
 .copies .cp{display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:10px 14px;border-radius:12px;border:0;background:var(--accent);color:var(--accent-ink);font:700 .98rem/1.2 var(--f-ui);text-decoration:none;cursor:pointer;text-align:center}
 .copies .cp::before{content:"\29C9";font-weight:400}
 .copies .cp.open::before{content:"\2197"}
+.copies .cp.open{min-height:52px;padding-block:0;font:700 1.05rem/1 var(--f-ui)}
 .copies .cp.copied{background:var(--rec);color:var(--surface)}
 .copies .cpnote{font-size:.85rem;color:var(--muted);margin:0;overflow-wrap:anywhere}
 
@@ -130,9 +134,14 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
 .quiet li:first-child{border-top:0}
 .quiet .when{margin-left:auto;color:var(--faint);font-variant-numeric:tabular-nums}
 .quiet li.stale .when{color:var(--warn)}
+.quiet .copies{flex-basis:100%}
 .flight-head{display:flex;align-items:baseline;gap:10px;margin:8px 0 0}
 .flight-head .label{margin:0}
 .flight-head .sub{font-size:.85rem;color:var(--faint);margin:0}
+.stuckstrip{display:flex;flex-direction:column;gap:10px}
+.stuckstrip .flight-head{margin:0}
+.stuckstrip .flight-head .label{color:var(--warn)}
+.stuckstrip .quiet{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:12px;padding:0 12px}
 
 .hist{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
 .hist button{width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:6px;cursor:pointer;color:var(--ink);font:inherit}
@@ -155,7 +164,9 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     </nav>
   </header>
   <p id="wake" class="wake" role="status" hidden><span class="dot" aria-hidden="true"></span><span id="wake-text"></span></p>
+  <ul id="seen" class="seen" hidden></ul>
   <div id="rearm" class="rearm" hidden></div>
+  <section id="stuck" class="stuckstrip" aria-label="Probably stuck" hidden></section>
   <main id="main"><p class="notice">Loading questions…</p></main>
 </div>
 
@@ -190,22 +201,24 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
 
   // ---------- helpers ----------
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const safeUrl = u => /^https?:\/\//i.test(String(u || '')) ? String(u) : '';
+  const safeUrl = u => /^https:\/\//i.test(String(u || '')) ? String(u) : '';
   function inline(s){
     let t = esc(s);
     t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
     t = t.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    t = t.replace(/(^|[\s(])(https?:\/\/[^\s<)]+)/g, (m, pre, url) => pre + '<a href="' + url + '" target="_blank" rel="noopener">' + url + '</a>');
+    t = t.replace(/(^|[\s(])(https:\/\/[^\s<)]+)/g, (m, pre, url) => pre + '<a href="' + url + '" target="_blank" rel="noopener">' + url + '</a>');
     return t;
   }
   function richText(text){
     const blocks = String(text || '').replace(/\r\n/g, '\n').trim().split(/\n\s*\n/);
     return blocks.filter(b => b.trim()).map(b => {
       const lines = b.split('\n');
-      if (lines.every(l => /^\s*[-*]\s+/.test(l))) {
-        return '<ul>' + lines.map(l => '<li>' + inline(l.replace(/^\s*[-*]\s+/, '')) + '</li>').join('') + '</ul>';
-      }
-      return '<p>' + lines.map(inline).join('<br>') + '</p>';
+      // text lines first, then a list from the first `- ` or `* ` line on
+      const at = lines.findIndex(l => /^\s*[-*]\s+/.test(l));
+      const text = at < 0 ? lines : lines.slice(0, at);
+      const items = at < 0 ? [] : lines.slice(at);
+      return (text.length ? '<p>' + text.map(inline).join('<br>') + '</p>' : '') +
+        (items.length ? '<ul>' + items.map(l => '<li>' + inline(l.replace(/^\s*[-*]\s+/, '')) + '</li>').join('') + '</ul>' : '');
     }).join('');
   }
   function ago(iso){
@@ -280,19 +293,27 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
   // Every answer is also sent to Claude as a comment on this page, which wakes any
   // coordinator session watching it. The db stays the record; the comment is the doorbell.
   function renderWake(){
+    renderSeen();
     if (!S.comments) { wakeEl.hidden = true; return; }
     let state, text;
     if (S.wakeMsg) { state = S.wakeState; text = S.wakeMsg; }
-    else if (S.canWake === 'available') { state = 'available'; text = 'A coordinator is listening: answering wakes it.'; }
+    else if (S.canWake === 'available') { state = 'available'; text = 'At least one coordinator is listening: answering wakes the one for that project.'; }
     else if (S.canWake === 'no_session') { state = 'asleep'; text = 'No coordinator is listening. Answers are saved, but nobody is woken until one watches this page.'; }
     else { state = 'off'; text = 'Answers are saved; waking a coordinator is not available in this view.'; }
-    const seen = Object.entries(S.lastActive).filter(([, a]) => Date.parse(a))
-      .map(([p, a]) => p + ' coordinator last active ' + ago(a));
-    if (seen.length) text += ' ' + seen.join(' · ') + '.';
     wakeEl.dataset.state = state;
     wakeText.textContent = text;
     wakeEl.hidden = false;
     renderRearm(state === 'asleep');
+  }
+
+  // Each project's coordinator, with when it last did anything: shown whether or not the comments
+  // feature loaded, since the platform only says whether some session is listening, never which.
+  const seenEl = document.getElementById('seen');
+  function renderSeen(){
+    const list = Object.entries(S.lastActive).filter(([, a]) => Date.parse(a)).sort(([a], [b]) => a.localeCompare(b));
+    seenEl.innerHTML = list.map(([p, a]) => '<li class="' + (Date.now() - Date.parse(a) > STALE_MS ? 'stale' : '') + '" title="' + esc(full(a)) + '">' +
+      esc(p) + ' coordinator last active ' + esc(ago(a)) + '</li>').join('');
+    seenEl.hidden = !list.length;
   }
 
   // Nobody listening: one tap copies the paste-in message and opens that project's
@@ -402,6 +423,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     nOpen.textContent = open.length ? '(' + open.length + ')' : '';
     tabNow.setAttribute('aria-pressed', String(S.view === 'now'));
     tabHist.setAttribute('aria-pressed', String(S.view === 'hist'));
+    renderStuck();
 
     if (S.failed) { main.innerHTML = '<p class="notice">' + esc(S.failed) + '</p>'; S.shownKey = ''; return; }
     if (!S.ready) return;
@@ -502,6 +524,30 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     '</article>';
   }
 
+  // Probably stuck: above an open item, only what is late (an overdue in-flight item, a quiet
+  // coordinator), each with its one tap; the full in-flight list stays in the empty state.
+  const stuckEl = document.getElementById('stuck');
+  let stuckKey = '';
+  function renderStuck(){
+    let html = '';
+    if (S.ready && !S.failed && S.view === 'now') {
+      pickCurrent();
+      if (S.currentId) {
+        const flights = flightList();
+        const late = flights.filter(([, f]) => dueText(f.expectBy).late);
+        const quiet = quietCoordinators(flights).filter(isStale);
+        if (late.length || quiet.length) html = '<div class="flight-head"><p class="label">Probably stuck</p><p class="sub">' +
+          (late.length + quiet.length) + ' overdue or quiet</p></div>' +
+          (late.length ? '<ul class="flight">' + late.map(([id, f]) => flightHtml(id, f, true)).join('') + '</ul>' : '') +
+          (quiet.length ? '<ul class="quiet">' + quiet.map(quietHtml).join('') + '</ul>' : '');
+      }
+    }
+    if (html === stuckKey) return;
+    stuckKey = html;
+    stuckEl.innerHTML = html;
+    stuckEl.hidden = !html;
+  }
+
   // Coordinators this page knows of (they wrote coordinators/<project>) that have nothing in flight:
   // silence is attributed to a named coordinator, never asserted as a fact about the work.
   const STALE_MS = 2 * 3600e3;
@@ -510,13 +556,33 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     const known = new Set([...Object.keys(S.coordinators), ...Object.keys(S.lastActive)]);
     return [...known].filter(p => !busy.has(p)).sort();
   }
+  const isStale = p => { const t = Date.parse(S.lastActive[p]); return !t || Date.now() - t > STALE_MS; };
   function quietHtml(p){
     const seen = S.lastActive[p];
     const t = Date.parse(seen);
-    const stale = !t || Date.now() - t > STALE_MS;
+    const stale = isStale(p);
     return '<li class="' + (stale ? 'stale' : '') + '"><span class="tag">' + esc(p) + '</span><span>' +
       (stale ? 'nothing reported, and its coordinator has gone quiet' : 'nothing reported in flight') + '</span>' +
-      '<span class="when"' + (t ? ' title="' + esc(full(seen)) + '"' : '') + '>' + (t ? 'last active ' + esc(ago(seen)) : 'never stamped') + '</span></li>';
+      '<span class="when"' + (t ? ' title="' + esc(full(seen)) + '"' : '') + '>' + (t ? 'last active ' + esc(ago(seen)) : 'never stamped') + '</span>' +
+      restartHtml('coordinator:' + p, quietRestartOf(p)) + '</li>';
+  }
+  // A quiet coordinator gets the same one tap as an overdue item: a nudge, and its session opened.
+  function quietRestartOf(p){
+    const url = S.coordinators[p] || '';
+    if (!isStale(p) || !/^https:\/\/claude\.ai\//.test(url)) return null;
+    const t = Date.parse(S.lastActive[p]);
+    return {
+      label: 'Copy nudge, open ' + p + ' coordinator',
+      text: '[questions page] ' + p + ' has nothing in flight and its coordinator ' + (t ? 'was last active ' + ago(S.lastActive[p]) : 'has never recorded when it was last active') +
+        '. Read CONVENTIONS.md and claude/QUESTIONS-PAGE.md from edsaperia/dev-ops main, put whatever you are waiting on in flight, or ask what next on the page.',
+      url
+    };
+  }
+  function restartHtml(key, restart){
+    return restart ? '<div class="copies">' + (restart.url
+        ? '<a class="cp" href="' + esc(restart.url) + '" target="_blank" rel="noopener" data-fcopy="' + esc(key) + '">' + esc(restart.label) + '</a>'
+        : '<button type="button" class="cp" data-fcopy="' + esc(key) + '">' + esc(restart.label) + '</button>') +
+      '<p class="cpnote" aria-live="polite"></p></div>' : '';
   }
   function emptyHtml(){
     const n = answeredList().length;
@@ -541,18 +607,19 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
   // The one tap that restarts a stuck item: copies a message and opens the session it goes to.
   // A coordinator can name it (`restart`); otherwise an overdue item gets a nudge to its coordinator.
   function restartOf(id, f){
+    if (!dueText(f.expectBy).late) return null;
     const r = f.restart;
     if (r && typeof r.text === 'string' && r.text) return { label: String(r.label || 'Restart'), text: r.text, url: safeUrl(r.url) };
     const proj = String(f.project || 'project');
     const url = S.coordinators[projectKey(f)] || '';
-    if (!dueText(f.expectBy).late || !/^https:\/\/claude\.ai\//.test(url)) return null;
+    if (!/^https:\/\/claude\.ai\//.test(url)) return null;
     return {
       label: 'Copy nudge, open ' + proj + ' coordinator',
       text: '[questions page] inflight/' + id + ' is overdue: ' + (f.title || '') + '. Read it from the page\'s db, find where the work stands, act, and update expectBy or set status done.',
       url
     };
   }
-  function flightHtml(id, f){
+  function flightHtml(id, f, compact){
     const due = dueText(f.expectBy);
     const links = (Array.isArray(f.links) ? f.links : []).filter(l => safeUrl(l && l.url));
     const proj = String(f.project || 'project');
@@ -566,18 +633,14 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
         (seen && Date.parse(seen) ? ' (last active ' + esc(ago(seen)) + ')' : '') +
         (restart ? '. One tap below restarts it' : links.length ? '. Check the link below' : '') + '.';
     }
-    const restartHtml = restart ? '<div class="copies">' + (restart.url
-        ? '<a class="cp" href="' + esc(restart.url) + '" target="_blank" rel="noopener" data-fcopy="' + esc(id) + '">' + esc(restart.label) + '</a>'
-        : '<button type="button" class="cp" data-fcopy="' + esc(id) + '">' + esc(restart.label) + '</button>') +
-      '<p class="cpnote" aria-live="polite"></p></div>' : '';
     return '<li class="' + (due.late ? 'late' : 'due') + '" data-id="' + esc(id) + '">' +
       '<div class="fmeta"><span class="tag">' + esc(proj) + '</span>' + started + touched +
         '<span class="when"' + (f.expectBy ? ' title="' + esc(full(f.expectBy)) + '"' : '') + '>' + esc(due.text) + '</span></div>' +
       '<p class="ftitle">' + esc(f.title || 'Work in progress') + '</p>' +
-      (f.detail ? '<div class="ctx">' + richText(f.detail) + '</div>' : '') +
+      (f.detail && !compact ? '<div class="ctx">' + richText(f.detail) + '</div>' : '') +
       (f.next ? '<p class="fnext">Then: <b>' + esc(f.next) + '</b></p>' : '') +
       (stuck ? '<p class="stuck">' + stuck + '</p>' : '') +
-      restartHtml +
+      restartHtml(id, restart) +
       (links.length ? '<div class="links">' + links.map(l => '<a href="' + esc(safeUrl(l.url)) + '" target="_blank" rel="noopener">' + esc(l.label || l.url) + '</a>').join('') + '</div>' : '') +
     '</li>';
   }
@@ -630,11 +693,13 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     draftFor(id, q)[f] = e.target.value;
     syncButton();
   });
-  main.addEventListener('click', e => {
+  function restartTap(e){
     const fc = e.target.closest('[data-fcopy]');
     if (fc) {
       // an in-flight item's restart: copied inside the tap; a link-button then opens its session by itself
-      const f = S.flights.get(fc.dataset.fcopy); const r = f && restartOf(fc.dataset.fcopy, f);
+      // keyed by in-flight id, or coordinator:<project> for a quiet coordinator
+      const k = fc.dataset.fcopy, f = S.flights.get(k);
+      const r = k.startsWith('coordinator:') ? quietRestartOf(k.slice(12)) : f && restartOf(k, f);
       if (!r) return;
       const note = fc.parentElement.querySelector('.cpnote');
       copyText(r.text).then(ok => {
@@ -642,8 +707,12 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
         if (note) note.textContent = ok ? 'Copied' + (r.url ? ', and opened. Paste it there and send.' : '. Paste it where it goes.')
           : 'Could not copy on this device. The text: ' + r.text;
       });
-      return;
     }
+    return !!fc;
+  }
+  stuckEl.addEventListener('click', restartTap);
+  main.addEventListener('click', e => {
+    if (restartTap(e)) return;
     const cp = e.target.closest('[data-copy]');
     if (cp) {
       // copied inside the tap; a link-button then opens its page in a new tab by itself
@@ -705,7 +774,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
 
   tabNow.addEventListener('click', () => { S.view = 'now'; S.editId = null; S.error = ''; render(true); });
   tabHist.addEventListener('click', () => { S.view = 'hist'; S.error = ''; render(true); });
-  setInterval(() => { if (!main.querySelector('textarea:focus')) render(true); if (!S.wakeMsg) refreshWake(); }, 60000);
+  setInterval(() => { if (!main.querySelector('textarea:focus')) render(true); renderSeen(); if (!S.wakeMsg) refreshWake(); }, 60000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden && !S.wakeMsg) refreshWake(); });
 
   // ---------- data ----------
@@ -726,6 +795,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
       snap.docs.forEach(doc => { const a = doc.exists && doc.data().lastActive; if (a) act[doc.id] = String(a); });
       S.lastActive = act;
       renderWake();
+      renderStuck();
     }, () => {});
     db.collection('inflight').onSnapshot(snap => {
       const next = new Map();
