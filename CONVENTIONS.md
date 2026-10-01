@@ -25,7 +25,7 @@ All agents may post as Ed's GitHub account; the prefix says who is speaking.
 
 - A builder pushes **only its own branch** — never `main`, never someone else's branch — and commits and pushes after every piece of work.
 - A builder that starts from another builder's branch **pushes at least one commit of its own before opening its PR**. Opened on the other branch's tip, the PR is marked *merged* the moment that branch lands on `main`, and a closed PR runs no CI and holds no conversation (draft #104, 2026-09-26).
-- **Merging to `main` is Ed's tap**, on GitHub (desktop or phone), or a coordinator acting on Ed's explicit word in that moment. In a repo where `main` deploys, the merge is the deploy decision.
+- **Merging to `main` is Ed's tap**, on GitHub (desktop or phone), or a coordinator acting on Ed's explicit word in that moment. In a repo where `main` deploys, the merge is the deploy decision. **In a repo where `main` deploys nothing** (dev-ops), the coordinator merges a PR itself once it carries a change Ed chose on his questions page, and posts an OK-only *update* there naming the PR and what it carried; a merge task is not raised (Ed, 2026-10-01: "Why can't you merge this yourself?"). A merge that deploys stays Ed's tap.
 - A builder never writes the project's changelog or release notes unless its brief says so; the coordinator does, at the merge.
 
 ## Waking a builder
