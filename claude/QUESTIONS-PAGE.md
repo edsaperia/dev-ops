@@ -45,7 +45,7 @@ A coordinator writes `coordinators/<project>`, `{sessionUrl, at, by, lastActive}
 
 `ArtifactData` with `action: "set"`, `url` the page above, `collection: "questions"`, `doc_id: "<project>-<number>"`, and `data` holding every coordinator field above with `status: "open"` and no `answer`. The page is live: if Ed has it open, the question appears at once.
 
-Before asking, check the id is free (`action: "get"`); never overwrite an existing question. Keep `context` self-contained: Ed answers from his phone, often away from the repo, so the question body must say what the thing does now, why it is undecided and what each choice costs. The database holds at most 5,000 documents; delete old handled questions if it ever fills.
+Before asking, check the id is free (`action: "get"`); never overwrite an existing question. **Check too that events have not already answered it**: the PR, the builder's latest comment, Ed's earlier answers. When something answers a question that is open on the page, withdraw it and say so in one line of the next update, so Ed sees it went (plan-queue, 2026-08-24: of seven open questions, five had already been answered by events, and of seven blocks raised in a day, one needed Ed). Keep `context` self-contained: Ed answers from his phone, often away from the repo, so the question body must say what the thing does now, why it is undecided and what each choice costs. The database holds at most 5,000 documents; delete old handled questions if it ever fills.
 
 ## How a coordinator reads answers
 
