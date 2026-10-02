@@ -50,11 +50,17 @@ All agents may post as Ed's GitHub account; the prefix says who is speaking.
 
 - **`@claude` in an issue or PR comment** (by someone with write access) starts a Claude builder on a GitHub Actions runner in any repo wired up per [`claude/SETUP.md`](claude/SETUP.md). It reads the project's `CLAUDE.md`, this file and `AGENTS.md`, pushes a `claude/…` branch, and comments a link to open the PR.
 - A cloud session (claude.ai/code) is woken by a message; a coordinator posts the instruction as a `COORDINATOR:` comment first, then sends the one-line nudge *read the latest COORDINATOR comment on your PR and act on it*.
+- **A cloud-session builder watches its own PR.** When it opens its PR, the builder subscribes to the PR's activity (`subscribe_pr_activity`), and again after any restart. Its events then wake it without the coordinator:
+  - a notice that the PR no longer merges cleanly: merge `main`, resolve the conflict, run the gates, push, and say so on the PR;
+  - a red check: fix it, or show it is not this PR's, as CI-red handling requires;
+  - a `COORDINATOR:` comment: act on it.
+
+  A green check, or an event echoing its own comment, needs nothing. A builder still never merges its PR and never asks Ed. It unsubscribes once the PR is merged or closed. **The coordinator is the backstop**: after each merge to `main`, it lists the open PRs that no longer merge cleanly and wakes the builder of each one that has not already pushed a fix, since a notice can be missed (Ed, 2026-10-02: small PRs waited hours for someone to notice that `main` had moved).
 - **Every cloud session runs in Auto mode**, coordinator or builder, chosen in the session's mode menu at the start (or switched while it runs). A session in the default mode asks Ed for one-off approvals that the repo's settings file cannot all suppress (`claude/SETUP.md` B5; Ed, 2026-09-30). A session that is asking for permission is a session that was opened in the wrong mode.
 
 ## Waking a coordinator: Ed's questions page
 
-A coordinator sleeps between messages, and nothing on GitHub wakes it (2026-09-26/28: a cloud coordinator went quiet seven times, for up to ten hours). So the loop runs through Ed's questions page ([`claude/QUESTIONS-PAGE.md`](claude/QUESTIONS-PAGE.md)):
+A coordinator sleeps between messages, and nothing on GitHub wakes it except activity on a pull request it has subscribed to (2026-09-26/28: a cloud coordinator went quiet seven times, for up to ten hours). So the loop runs through Ed's questions page ([`claude/QUESTIONS-PAGE.md`](claude/QUESTIONS-PAGE.md)):
 
 - **When anything finishes** — a `FINAL:` reviewed, a deploy verified, a check gone red — the coordinator puts an *update* on the page saying what finished and what it will start next. It does not start the next thing on its own.
 - **A builder that finishes says so on the page too**: with its `FINAL:` (or a blocking `QUESTION:`), a cloud-session builder puts an update on the page, *PR #n: finished — OK to have the coordinator review it*; Ed's OK wakes the coordinator to review. Without it a builder's `FINAL:` sits unread until something else wakes the coordinator.
