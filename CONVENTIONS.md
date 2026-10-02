@@ -38,6 +38,7 @@ All agents may post as Ed's GitHub account; the prefix says who is speaking.
 - **Point at a file and a symbol, never a line number**, which moves.
 - **Read the brief through for self-consistency before handing it over** (plan-queue, 2026-08-29: 4 of 12 agent-written plans contradicted themselves).
 - **One piece of work per brief**; an unrelated fix found on the way is its own PR (plan-queue: nine steps in one session cost $214 and stalled; a one-line brief cost $2.39).
+- **A subagent builder in a cloud session gets its worktree by hand.** Starting a subagent with `isolation: "worktree"` in a cloud session leaves it unable to run any command ("working-directory isolation context … was lost"), so it does nothing. Brief it to `git worktree add` into the scratchpad itself and work there (Topic, 2026-10-02: one builder start lost).
 
 ## Reviewing a FINAL
 
