@@ -17,7 +17,7 @@ Every piece of work has a **draft pull request**, opened by its builder at the s
 | `COORDINATOR:` | coordinator | an instruction or an answer; the builder acts on the latest one |
 | `QUESTION:` | builder | needs an answer; states the recommended option; the builder keeps working on anything that does not depend on it |
 | `REPORT:` | builder | progress at a milestone |
-| `FINAL:` | builder | the finished work: commits, checks and their results, what changed for a user, what was deferred, and every call Ed has not ruled on, numbered, each with context and options |
+| `FINAL:` | builder | the finished work: commits, checks and their results, what changed for a user, what was deferred, and every call Ed has not ruled on, numbered, each with context and options. **The checks are the exact commands CI runs, named word for word and run over what the builder wrote**; a narrower stand-in is not green (plan-queue, 2026-08-27: a type check that skipped every test file). **Every user-visible string that changed is listed, before → after**, or the FINAL says *no user-visible text changed*; silence is not *none* (plan-queue: thirteen member-facing sentences once landed unrecorded) |
 
 All agents may post as Ed's GitHub account; the prefix says who is speaking.
 
@@ -28,7 +28,22 @@ All agents may post as Ed's GitHub account; the prefix says who is speaking.
 - **Merging to `main` is Ed's tap**, on GitHub (desktop or phone), or a coordinator acting on Ed's explicit word in that moment. In a repo where `main` deploys, the merge is the deploy decision. **In a repo where `main` deploys nothing** (dev-ops), the coordinator merges a PR itself once it carries a change Ed chose on his questions page, and posts an OK-only *update* there naming the PR and what it carried; a merge task is not raised (Ed, 2026-10-01: "Why can't you merge this yourself?"). A merge that deploys stays Ed's tap.
 - A builder never writes the project's changelog or release notes unless its brief says so; the coordinator does, at the merge.
 
+## Briefing a builder
+
+- **Write the brief just before the build starts**, not days ahead: a plan right when written goes stale as other work lands (plan-queue lost a week to such plans).
+- **Point at a file and a symbol, never a line number**, which moves.
+- **Read the brief through for self-consistency before handing it over** (plan-queue, 2026-08-29: 4 of 12 agent-written plans contradicted themselves).
+- **One piece of work per brief**; an unrelated fix found on the way is its own PR (plan-queue: nine steps in one session cost $214 and stalled; a one-line brief cost $2.39).
+
+## Reviewing a FINAL
+
+- **A red check whose failure names nothing the diff touches gets one re-run before it is treated as a defect**; a second red on the same commit is real, and is never re-run again. A builder that disputes a red with measurements may be right (plan-queue, 2026-08-27 and 08-29: reds from machine load, green on a plain re-run).
+- **Any check against a running server first proves the server is serving this commit** (its health or version check names the sha); a stale server gives false findings (plan-queue, 2026-08-25: three).
+
 ## Waking a builder
+
+- **Before telling a builder that an answer or a permission is in place, check that it is** (the rule written, the setting saved, the comment posted). Otherwise the resumed builder is refused again and works round it (plan-queue, 2026-08-27: Ed chose *allow both permanently*, nobody added the rule, and the builder deleted the file by another route).
+- **A quiet session may be rate-limited, not stuck**: read its usage (the session's rate-limit status) before diagnosing a stall, and when a promised time slips, say how many commits have been pushed so far (plan-queue: a review sat 35 minutes on an exhausted usage window and was reported as a stall).
 
 - **`@claude` in an issue or PR comment** (by someone with write access) starts a Claude builder on a GitHub Actions runner in any repo wired up per [`claude/SETUP.md`](claude/SETUP.md). It reads the project's `CLAUDE.md`, this file and `AGENTS.md`, pushes a `claude/…` branch, and comments a link to open the PR.
 - A cloud session (claude.ai/code) is woken by a message; a coordinator posts the instruction as a `COORDINATOR:` comment first, then sends the one-line nudge *read the latest COORDINATOR comment on your PR and act on it*.
