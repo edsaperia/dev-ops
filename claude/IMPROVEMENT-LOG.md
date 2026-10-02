@@ -23,7 +23,7 @@ The record kept by the daily improvement review ([`IMPROVEMENT.md`](IMPROVEMENT.
 | 2026-10-02 | Dev-ops lost its watch on draft #175 in a restart | Merge waited for an overdue in-flight item and Ed's nudge | Subscriptions die with the session | C4 |
 | 2026-10-02 | PRs merged one at a time; each merge put the rest into conflict | ~12 re-runs of ~40 min; small PRs waited 3–5 h | Queue order kept by habit; every PR edits the same ledgers | C3 |
 | 2026-10-02 | #160's Merge question waited 1h45 on Ed | The line stood still behind it | One question at a time | C3 |
-| 2026-10-02 | Main's deploy job waited 21 min for a machine | Every merge waits behind branch test runs | Account's limit on jobs at once; nothing puts the deploy first | C6 (watching) |
+| 2026-10-02 | Main's deploy job waited 21 min for a machine | Every merge waits behind branch test runs | Account's limit on jobs at once; nothing puts the deploy first | C6, then C7 |
 | 2026-10-02 | Three auto-mode safety refusals in dev-ops (a trigger delete, a hash read, a force-push) | Ed had to type a go-ahead once; two reroutes | Classifier caution on outward actions | Watch: if it repeats, find the pattern |
 | 2026-10-02 | Good: #163's new check caught the rail triangle hanging under the dev switch | 1h40 to fix before deploy, not after | Draft's one-check-per-fix rule | Keep the rule |
 | 2026-10-02 | Draft (sent): four new builder PRs (#170 #171 #172 #174) unseen ~1.5 h | Review started late | Coordinator not subscribed to new PRs | Draft now subscribes on open and lists PRs at each wake |
@@ -45,4 +45,5 @@ The record kept by the daily improvement review ([`IMPROVEMENT.md`](IMPROVEMENT.
 | C3 | Faster merges: every ready PR asked at once, docs-only merges by the coordinator, ledgers written on main, no re-run for being behind by docs (dev-ops PR #26) | 2026-10-02 16:27 | Draft's small PRs merged within 2 h of opening (median); at most 3 merge-main commits a day; docs PRs merged without a question | 2026-10-03, again 2026-10-05 | First sign: #166 merged without a question at 16:34 |
 | C4 | A restarted coordinator re-subscribes to its PRs (dev-ops PR #26) | 2026-10-02 16:27 | No overdue in-flight item caused by a missed PR event | 2026-10-09 | |
 | C5 | Builders watch their own PRs; the coordinator is the backstop (dev-ops PR #27) | 2026-10-02 17:07 | A PR put into conflict by a merge is pushed up to date within 30 min, unprompted | 2026-10-04 | |
-| C6 | Watching main's deploy wait for an hour; a proposal if it recurs | 2026-10-02 17:00 | (measurement) | 2026-10-02 18:00 | |
+| C6 | Watching main's deploy wait for an hour; a proposal if it recurs | 2026-10-02 17:00 | (measurement) | 2026-10-02 18:00 | Recurred: 2 of 9 merges waited (#166 21 min, #170 4 min), the rest 3–4 s; 19 jobs per merge, stale PR runs uncancelled. Led to C7 |
+| C7 | The deploy never queues behind PR checks: stale PR runs cancelled, one slow suite per branch, deploy job first on main (CONVENTIONS) | 2026-10-02 18:14 (rule); draft's workflows by its Merge question | No deploy job on main waits over 2 min for a machine; PR verdicts at most ~5 min slower | 2026-10-05 | |
