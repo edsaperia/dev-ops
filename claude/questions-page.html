@@ -247,11 +247,16 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
   const projectKey = q => String(q.project || 'project').replace(/[^A-Za-z0-9_\-.~:@+]/g, '-').slice(0, 100) || 'project';
   // Mis-shaped: an open item the page cannot offer an answer for (an unknown kind, a question with no
   // options, no title). Returns the reason, or '' when the item is well formed.
+  // Open: status "open", or no status at all and no answer yet (written without one, 2026-10-02:
+  // three draft items sat invisible); the missing status itself makes the item mis-shaped.
+  const isOpen = q => !!q && (q.status === 'open' || (q.status == null && !q.answer));
   function misShape(q){
-    if (!q || q.status !== 'open') return '';
+    if (!isOpen(q)) return '';
     const why = [];
+    if (q.status == null) why.push('no status');
     if (q.kind != null && !['question', 'update', 'task'].includes(q.kind)) why.push('kind ' + JSON.stringify(q.kind));
     if (kindOf(q) === 'question' && !(Array.isArray(q.options) && q.options.length)) why.push('no options');
+    else if (Array.isArray(q.options) && q.options.some(o => !o || typeof o !== 'object' || o.key == null)) why.push('options without keys');
     if (typeof q.title !== 'string') why.push('no title');
     return why.join(', ');
   }
@@ -266,7 +271,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
   }
 
   function openList(){
-    return [...S.docs.entries()].filter(([, q]) => q.status === 'open')
+    return [...S.docs.entries()].filter(([, q]) => isOpen(q))
       .sort(([ia, a], [ib, b]) => (Date.parse(a.asked) || 0) - (Date.parse(b.asked) || 0) || ia.localeCompare(ib));
   }
   function answeredList(){
@@ -290,7 +295,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
   }
   function pickCurrent(){
     const open = openList();
-    if (S.currentId && S.docs.get(S.currentId)?.status === 'open') return;
+    if (S.currentId && isOpen(S.docs.get(S.currentId))) return;
     let next = open.find(([id]) => !S.skipped.has(id));
     if (!next && open.length) { S.skipped.clear(); next = open[0]; }
     if (next && S.currentId !== next[0]) S.animate = true;
@@ -552,7 +557,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
       '<div class="meta">' + tagsHtml(q) + (by ? '<span>' + by + '</span>' : '') + '<span class="count">' + pos + ' of ' + total + ' waiting</span></div>' +
       '<h2 class="qtitle">' + esc(typeof q.title === 'string' && q.title ? q.title : id) + '</h2>' +
       '<p class="prev">This item is mis-shaped (' + esc(misShape(q)) + '), so it cannot be answered here. One tap reports it to the dev-ops coordinator, who repairs it.</p>' +
-      (q.context ? '<div class="ctx">' + richText(q.context) + '</div>' : '') +
+      (q.context || q.body ? '<div class="ctx">' + richText(String(q.context || q.body)) + '</div>' : '') +
       '<div class="copies">' + (r.url
         ? '<a class="cp" href="' + esc(r.url) + '" target="_blank" rel="noopener" data-copy="0">' + esc(r.label) + '</a>'
         : '<button type="button" class="cp" data-copy="0">' + esc(r.label) + '</button>') + '<p class="cpnote" aria-live="polite"></p></div>' +
