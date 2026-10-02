@@ -31,6 +31,37 @@ Safety, by design of `anthropics/claude-code-action`: only people with write acc
 5. **Permission mode: Auto, for every session**, coordinator or builder. Pick it in the session's mode menu when you open the session, or change it while the session runs; a resumed session keeps its mode. Auto is the only thing that stops the one-off approval prompts (Ed, 2026-09-30): the repo's `.claude/settings.json` (the standing permissions, dev-ops PR #11) is honoured only by a session on a single repository in the default mode, a session on two repositories reads no permission rules from it at all, and the *edit the data in "Questions for Ed"* consent is not covered by allow rules in either mode. `.claude/settings.json` also carries `defaultMode: "auto"`, and it works: a new session on a repo whose settings file has that line opens in Auto without anyone choosing it (Ed, 2026-09-30, on dev-ops). So this step is automatic on every repo whose settings file carries the line; choose the mode by hand only in a session opened before the line was merged, or on a repo without it.
 6. **The page-contract mod**: copy `.claude/skills/page-contract/` from dev-ops into the repo (in a repo where `main` deploys, by a Merge question like any other change), and make sure the environment's variables carry `CLAUDE_CODE_PLUGIN_DIRS` with that repo's path, as `claude/QUESTIONS-PAGE.md`, *The page-contract mod*, gives it. Without the variable a cloud session does not load the mod.
 
+## C. Taking on a project: its coordinator, start to finish
+
+The order the dev-ops coordinator follows when Ed brings a project in, new or existing (2026-10-02, admissions). Each step names who does it; Ed's steps go on his questions page as tasks with a one-tap button.
+
+1. **Reach the repository** (dev-ops). Attach it with `add_repo`. If it can't be reached, the Claude GitHub app needs access to it, which only the owner can give. Put a task on Ed's page with a large button to https://github.com/apps/claude/installations/select_target, since nothing else can proceed.
+2. **Read it** (dev-ops, a subagent on Opus allowed). Find out:
+   - what it is and who uses it;
+   - whether a push to `main` deploys, and how;
+   - how it is tested;
+   - what is half-done: open PRs, open issues, a plan file.
+
+   Summarise this for Ed as an update on his page.
+3. **Add the shared files** (dev-ops, by PR; a Merge question if `main` deploys):
+   - `.claude/settings.json` with the standing permissions and `defaultMode: "auto"` (copy dev-ops's);
+   - `.claude/skills/page-contract/` (B6);
+   - a `CLAUDE.md`, if the project has none: what it is, how to test, whether `main` deploys, and a glossary heading.
+4. **Wire builders** (Ed, optional): A1–A5 above for `@claude` builders. This is the only step with a secret in it.
+5. **The cloud environment** (Ed; dev-ops gives the exact values in the task):
+   - network allowances (B2) and a setup script (B3), if the project needs them;
+   - the repository's path appended to `CLAUDE_CODE_PLUGIN_DIRS` (B6).
+6. **Open the coordinator** (Ed, one tap). The task's button copies the first message and opens a new session on the repository in Auto mode. The message: *You are the coordinator for `<project>`. Read AGENTS.md and CONVENTIONS.md from edsaperia/dev-ops main, then claude/QUESTIONS-PAGE.md; then ask me to paste my questions page's link.* Ed then pastes the page link into it.
+7. **The coordinator joins the page** (the new coordinator):
+   - arms its watch;
+   - `set`s `coordinators/<project>` with its session link;
+   - subscribes to the project's open PRs;
+   - asks Ed *what next*, recommending from step 2's reading.
+8. **Bookkeeping** (dev-ops):
+   - a row in [`../projects.md`](../projects.md);
+   - the project added to the improvement review's daily numbers;
+   - the coordinator's session added to whoever pokes on contract changes.
+
 ## If the laptop crashed
 
 A local coordinator's conversation is on disk: `claude --continue` in the project folder brings it back. Cloud sessions and Actions runs are unaffected by the laptop; their work is on their pushed branches.
