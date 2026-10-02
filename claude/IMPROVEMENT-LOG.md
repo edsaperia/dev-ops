@@ -26,6 +26,13 @@ The record kept by the daily improvement review ([`IMPROVEMENT.md`](IMPROVEMENT.
 | 2026-10-02 | Main's deploy job waited 21 min for a machine | Every merge waits behind branch test runs | Account's limit on jobs at once; nothing puts the deploy first | C6 (watching) |
 | 2026-10-02 | Three auto-mode safety refusals in dev-ops (a trigger delete, a hash read, a force-push) | Ed had to type a go-ahead once; two reroutes | Classifier caution on outward actions | Watch: if it repeats, find the pattern |
 | 2026-10-02 | Good: #163's new check caught the rail triangle hanging under the dev switch | 1h40 to fix before deploy, not after | Draft's one-check-per-fix rule | Keep the rule |
+| 2026-10-02 | Draft (sent): four new builder PRs (#170 #171 #172 #174) unseen ~1.5 h | Review started late | Coordinator not subscribed to new PRs | Draft now subscribes on open and lists PRs at each wake |
+| 2026-10-02 | Draft (sent): #174 turned CLAUDE.md's line endings CRLF→LF, breaking a gotcha's literal CR | One extra fix round | Builder rewrote the file in text mode | Candidate: a line-ending check in spec-check, so the push catches it |
+| 2026-10-02 | Draft (sent): the coordinator can't read docs.vote/healthz or edit .claude/settings.json (auto-mode refusals) | Deploys verified only by CI's own step | Classifier treats production and self-editing as risky | A page task owed by draft for Ed's one-line approval |
+| 2026-10-02 | Draft (sent): builder Charlie reported Ed's Q5 as open 80 min after it was answered and relayed | 80 min | Builder missed the COORDINATOR comment | C5 should cover it |
+| 2026-10-02 | Draft (sent), good: the builder measured the real cause of #163's toc-travel red after the coordinator misdiagnosed it | Wrong fix avoided | Builder pushback with measurements | Keep: builders may dispute a diagnosis with numbers |
+| 2026-10-02 | Draft (sent), good: copy-check's walk caught four 📧 text moves needing a golden re-freeze before merge | Caught before deploy | Sprint tier | Keep |
+| 2026-10-02 | Draft (sent): Ed judges UI from screenshots, so some issues show only after deploy | Fix rounds after deploy | No way to try a PR before it deploys | Candidate: a preview deploy per PR, linked from each Merge question |
 
 ## Changes
 
