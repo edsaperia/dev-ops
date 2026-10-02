@@ -33,6 +33,8 @@ The record kept by the daily improvement review ([`IMPROVEMENT.md`](IMPROVEMENT.
 | 2026-10-02 | Draft (sent), good: the builder measured the real cause of #163's toc-travel red after the coordinator misdiagnosed it | Wrong fix avoided | Builder pushback with measurements | Keep: builders may dispute a diagnosis with numbers |
 | 2026-10-02 | Draft (sent), good: copy-check's walk caught four 📧 text moves needing a golden re-freeze before merge | Caught before deploy | Sprint tier | Keep |
 | 2026-10-02 | Draft (sent): Ed judges UI from screenshots, so some issues show only after deploy | Fix rounds after deploy | No way to try a PR before it deploys | Candidate: a preview deploy per PR, linked from each Merge question |
+| 2026-10-02 | A task's "Claude Code environments" link opened a blank tab (Ed) | A detour for Ed | The link pointed at claude.ai/code, not the settings page; it was never tried | Settings tasks give exact steps, not untried links |
+| 2026-10-02 | Admit (sent): its coordinator's GitHub tool reaches only nwspk/admit, so it can't read the rules from dev-ops as CONVENTIONS says | A workaround found by the coordinator | A session's GitHub scope is its own repository's owner | CONVENTIONS names the public clone as the fallback |
 
 ## Changes
 
