@@ -44,6 +44,7 @@ The record kept by the daily improvement review ([`IMPROVEMENT.md`](IMPROVEMENT.
 | 2026-10-02 | Topic (sent): every project's answers wake every watching coordinator (4 wakes in Topic's first 5 min; dozens for dev-ops today) | A turn per wake per coordinator, now 4 coordinators | One watch covers the whole page | Register item; the review weighs it now that 4 coordinators pay it |
 | 2026-10-02 | Admit (sent): a builder subscribed to its PR never woke for the coordinator's review comments (nwspk/web#53) | 22 min idle until a nudge | All agents post as Ed's account, so a COORDINATOR: comment looks like the builder's own echo | CONVENTIONS: the nudge after every COORDINATOR: comment stays; C5 refined |
 | 2026-10-02 | ae: the Claude app reaches it; PR events arrived at once (subscription and merge) | — | — | — |
+| 2026-10-02 | ae (sent): the watch-armed check in QUESTIONS-PAGE.md names wording a cloud session never shows | A check that can't pass as written | Cloud sessions word the watch listing differently | QUESTIONS-PAGE names both wordings |
 
 ## Changes
 
