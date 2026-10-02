@@ -38,6 +38,7 @@ The record kept by the daily improvement review ([`IMPROVEMENT.md`](IMPROVEMENT.
 | 2026-10-02 | Dev-ops told Ed that Claude couldn't push to Topic, trusting the attach tool's "push refused"; a real push and PR then worked | A wrong task on Ed's page, then a correction | Took a tool's prediction as a measurement | Test with a harmless real action before reporting a block |
 | 2026-10-02 | Dev-ops wrote page times rounded ahead of the clock (18:46, 18:47 at 18:44); the page guard refused the second | One refused write, one item 2 min early | Guessed the time instead of reading it | The guard works; read `date -u` before every stamp |
 | 2026-10-02 | Topic's repository has no Claude app, so GitHub events wake no session there | Topic's PRs must be checked by hand | Repository on another person's account | Issue #363 asks the owner |
+| 2026-10-02 | Admit (sent): a "read and sign off the spec" task got Done 25 s after posting, with no note | One extra question to find out what Done meant | A judgement step posted as a task | C8 |
 
 ## Changes
 
@@ -50,3 +51,4 @@ The record kept by the daily improvement review ([`IMPROVEMENT.md`](IMPROVEMENT.
 | C5 | Builders watch their own PRs; the coordinator is the backstop (dev-ops PR #27) | 2026-10-02 17:07 | A PR put into conflict by a merge is pushed up to date within 30 min, unprompted | 2026-10-04 | |
 | C6 | Watching main's deploy wait for an hour; a proposal if it recurs | 2026-10-02 17:00 | (measurement) | 2026-10-02 18:00 | Recurred: 2 of 9 merges waited (#166 21 min, #170 4 min), the rest 3–4 s; 19 jobs per merge, stale PR runs uncancelled. Led to C7 |
 | C7 | The deploy never queues behind PR checks: stale PR runs cancelled, one slow suite per branch, deploy job first on main (CONVENTIONS) | 2026-10-02 18:14 (rule); draft's workflows by its Merge question | No deploy job on main waits over 2 min for a machine; PR verdicts at most ~5 min slower | 2026-10-05 | |
+| C8 | A step that needs Ed's judgement is a question with named outcomes, never a task (QUESTIONS-PAGE.md) | 2026-10-02 18:56 | No judgement step is posted as a task, and no Done needs a follow-up question to read | 2026-10-09 | |
