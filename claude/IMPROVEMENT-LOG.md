@@ -35,6 +35,9 @@ The record kept by the daily improvement review ([`IMPROVEMENT.md`](IMPROVEMENT.
 | 2026-10-02 | Draft (sent): Ed judges UI from screenshots, so some issues show only after deploy | Fix rounds after deploy | No way to try a PR before it deploys | Candidate: a preview deploy per PR, linked from each Merge question |
 | 2026-10-02 | A task's "Claude Code environments" link opened a blank tab (Ed) | A detour for Ed | The link pointed at claude.ai/code, not the settings page; it was never tried | Settings tasks give exact steps, not untried links |
 | 2026-10-02 | Admit (sent): its coordinator's GitHub tool reaches only nwspk/admit, so it can't read the rules from dev-ops as CONVENTIONS says | A workaround found by the coordinator | A session's GitHub scope is its own repository's owner | CONVENTIONS names the public clone as the fallback |
+| 2026-10-02 | Dev-ops told Ed that Claude couldn't push to Topic, trusting the attach tool's "push refused"; a real push and PR then worked | A wrong task on Ed's page, then a correction | Took a tool's prediction as a measurement | Test with a harmless real action before reporting a block |
+| 2026-10-02 | Dev-ops wrote page times rounded ahead of the clock (18:46, 18:47 at 18:44); the page guard refused the second | One refused write, one item 2 min early | Guessed the time instead of reading it | The guard works; read `date -u` before every stamp |
+| 2026-10-02 | Topic's repository has no Claude app, so GitHub events wake no session there | Topic's PRs must be checked by hand | Repository on another person's account | Issue #363 asks the owner |
 
 ## Changes
 
