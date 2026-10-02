@@ -517,12 +517,8 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
       '<div class="meta">' + tagsHtml(q) + (by ? '<span>' + by + '</span>' : '') + counter + '</div>' +
       '<h2 class="qtitle">' + esc(q.title || (read ? 'Update' : 'Untitled question')) + '</h2>' +
       (q.context ? '<div class="ctx">' + richText(q.context) + '</div>' : '') +
-      (copies.length ? '<div class="copies">' + copies.map((c, i) => {
-          const lab = esc(c.label || 'Copy');
-          return c.url
-            ? '<a class="cp" href="' + esc(c.url) + '" target="_blank" rel="noopener" data-copy="' + i + '">' + lab + '</a>'
-            : '<button type="button" class="cp" data-copy="' + i + '">' + lab + '</button>';
-        }).join('') + '<p class="cpnote" aria-live="polite"></p></div>' : '') +
+      (copies.length ? '<div class="copies">' + copies.map((c, i) => copyPairHtml('data-copy', i, c.label || 'Copy', c.url)).join('') +
+        '<p class="cpnote" aria-live="polite"></p></div>' : '') +
       (openLink ? '<div class="copies"><a class="cp open" href="' + esc(safeUrl(openLink.url)) + '" target="_blank" rel="noopener">' + esc(/^open\b/i.test(openLink.label || '') ? openLink.label : 'Open ' + (openLink.label || openLink.url)) + '</a></div>' : '') +
       (smallLinks.length ? '<div class="links">' + smallLinks.map(l => '<a href="' + esc(safeUrl(l.url)) + '" target="_blank" rel="noopener">' + esc(l.label || l.url) + '</a>').join('') + '</div>' : '') +
       (read ? '' :
@@ -558,9 +554,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
       '<h2 class="qtitle">' + esc(typeof q.title === 'string' && q.title ? q.title : id) + '</h2>' +
       '<p class="prev">This item is mis-shaped (' + esc(misShape(q)) + '), so it cannot be answered here. One tap reports it to the dev-ops coordinator, who repairs it.</p>' +
       (q.context || q.body ? '<div class="ctx">' + richText(String(q.context || q.body)) + '</div>' : '') +
-      '<div class="copies">' + (r.url
-        ? '<a class="cp" href="' + esc(r.url) + '" target="_blank" rel="noopener" data-copy="0">' + esc(r.label) + '</a>'
-        : '<button type="button" class="cp" data-copy="0">' + esc(r.label) + '</button>') + '<p class="cpnote" aria-live="polite"></p></div>' +
+      '<div class="copies">' + copyPairHtml('data-copy', 0, r.label, r.url) + '<p class="cpnote" aria-live="polite"></p></div>' +
       '<div class="actions">' + (total > 1 ? '<button class="ghost" data-act="skip">Later</button>' : '') + '</div>' +
     '</article>';
   }
@@ -619,10 +613,21 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
       url
     };
   }
+  // A copy that also goes somewhere is two big buttons, copy first, then open (Ed, 2026-10-02):
+  // the label's ", open …" half names the second button.
+  function splitLabel(label, hasUrl){
+    const m = String(label || '').match(/^(.*?),\s*(open\b.*)$/i);
+    const copy = (m ? m[1] : label) || 'Copy';
+    const open = m ? m[2].charAt(0).toUpperCase() + m[2].slice(1) : 'Open where it goes';
+    return hasUrl ? { copy: '1 · ' + copy, open: '2 · ' + open } : { copy, open: '' };
+  }
+  function copyPairHtml(attr, key, label, url){
+    const l = splitLabel(label, !!url);
+    return '<button type="button" class="cp" ' + attr + '="' + esc(key) + '">' + esc(l.copy) + '</button>' +
+      (url ? '<a class="cp open" href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(l.open) + '</a>' : '');
+  }
   function restartHtml(key, restart){
-    return restart ? '<div class="copies">' + (restart.url
-        ? '<a class="cp" href="' + esc(restart.url) + '" target="_blank" rel="noopener" data-fcopy="' + esc(key) + '">' + esc(restart.label) + '</a>'
-        : '<button type="button" class="cp" data-fcopy="' + esc(key) + '">' + esc(restart.label) + '</button>') +
+    return restart ? '<div class="copies">' + copyPairHtml('data-fcopy', key, restart.label, restart.url) +
       '<p class="cpnote" aria-live="polite"></p></div>' : '';
   }
   function emptyHtml(){
@@ -737,7 +742,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
   function restartTap(e){
     const fc = e.target.closest('[data-fcopy]');
     if (fc) {
-      // an in-flight item's restart: copied inside the tap; a link-button then opens its session by itself
+      // an in-flight item's restart: the copy button copies; the open button beside it opens the session
       // keyed by in-flight id, or coordinator:<project> for a quiet coordinator
       const k = fc.dataset.fcopy, f = S.flights.get(k);
       const r = k.startsWith('coordinator:') ? quietRestartOf(k.slice(12)) : f && restartOf(k, f);
@@ -745,7 +750,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
       const note = fc.parentElement.querySelector('.cpnote');
       copyText(r.text).then(ok => {
         fc.classList.toggle('copied', ok);
-        if (note) note.textContent = ok ? 'Copied' + (r.url ? ', and opened. Paste it there and send.' : '. Paste it where it goes.')
+        if (note) note.textContent = ok ? 'Copied.' + (r.url ? ' Now tap 2 to open it, then paste and send.' : ' Paste it where it goes.')
           : 'Could not copy on this device. The text: ' + r.text;
       });
     }
@@ -756,13 +761,13 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     if (restartTap(e)) return;
     const cp = e.target.closest('[data-copy]');
     if (cp) {
-      // copied inside the tap; a link-button then opens its page in a new tab by itself
+      // the copy button copies; the open button beside it (if any) opens the page in a new tab
       const q = S.docs.get(activeId()); const c = q && (misShape(q) ? [misReport(activeId(), q)] : copiesOf(q))[+cp.dataset.copy];
       if (!c) return;
       const note = cp.parentElement.querySelector('.cpnote');
       copyText(c.text).then(ok => {
         cp.classList.toggle('copied', ok);
-        if (note) note.textContent = ok ? 'Copied' + (c.url ? ', and opened. Paste it there and send.' : '. Paste it where it goes.')
+        if (note) note.textContent = ok ? 'Copied.' + (c.url ? ' Now tap 2 to open it, then paste and send.' : ' Paste it where it goes.')
           : 'Could not copy on this device. The text: ' + c.text;
       });
       return;

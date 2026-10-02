@@ -11,6 +11,7 @@ The page where coordinators on Ed's projects put questions only Ed can answer, a
   - 2026-09-30 (v11): *Probably stuck* above open items, each coordinator's last-active line always shown, a coordinator's `restart` only once late, lists after a line of text, `https://` links only.
   - 2026-10-01 (v12): mis-shaped items report themselves to the dev-ops coordinator.
   - 2026-10-02 (v13): an item written without `status` shows, as mis-shaped, instead of staying invisible; so do options without keys.
+  - 2026-10-02 (v14): a `copy` or `restart` with a `url` shows as two big buttons, *1 · copy* then *2 · open*, instead of one button that copies and opens at once (Ed: *split this into two big buttons*). A `label` written *Copy X, open Y* names the two buttons *Copy X* and *Open Y*.
 - **Source:** [`questions-page.html`](questions-page.html) in this folder is the published page. Change it here, republish it with the Artifact tool (`url` the page above, capabilities restated in full — `{"db":{"rules":[{"path":"","read":"owner","write":"owner"}]},"user":{},"comments":{}}` — since a publish that names capabilities replaces the whole set), and commit the file in the same PR.
 
 ## The collection: `questions`
