@@ -39,6 +39,9 @@ The record kept by the daily improvement review ([`IMPROVEMENT.md`](IMPROVEMENT.
 | 2026-10-02 | Dev-ops wrote page times rounded ahead of the clock (18:46, 18:47 at 18:44); the page guard refused the second | One refused write, one item 2 min early | Guessed the time instead of reading it | The guard works; read `date -u` before every stamp |
 | 2026-10-02 | Topic's repository has no Claude app, so GitHub events wake no session there | Topic's PRs must be checked by hand | Repository on another person's account | Issue #363 asks the owner |
 | 2026-10-02 | Admit (sent): a "read and sign off the spec" task got Done 25 s after posting, with no note | One extra question to find out what Done meant | A judgement step posted as a task | C8 |
+| 2026-10-02 | Topic (sent): a subagent builder started with worktree isolation had every command refused in the cloud session | One wasted builder start, ~1 min | Isolation context lost in cloud sessions | CONVENTIONS, "Briefing a builder": make the worktree by hand |
+| 2026-10-02 | Topic (sent): the page guard refused a page write with an `asked` time from memory, in the future | One refused write | Second coordinator today to guess the time (dev-ops was the first) | The guard catches it; a repeat on a third coordinator makes it a rule to read the clock |
+| 2026-10-02 | Topic (sent): every project's answers wake every watching coordinator (4 wakes in Topic's first 5 min; dozens for dev-ops today) | A turn per wake per coordinator, now 4 coordinators | One watch covers the whole page | Register item; the review weighs it now that 4 coordinators pay it |
 
 ## Changes
 
