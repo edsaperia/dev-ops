@@ -152,11 +152,8 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
 .hist .hmeta{display:flex;gap:8px;align-items:center;font-size:.8rem;color:var(--faint)}
 .hist .hmeta time{margin-left:auto;font-variant-numeric:tabular-nums}
 .notice{color:var(--muted);text-align:center;padding:40px 12px}
-/* Waiting: every open item listed, the one being answered opened in place (Ed, 2026-10-03) */
-#main{display:flex;flex-direction:column;gap:10px}
-.queue:empty{display:none}
-.queue .htitle{font-weight:400}
-.card{scroll-margin-top:72px}
+/* Waiting: every open item, each a full card answered where it stands (Ed, 2026-10-03) */
+.cards{display:flex;flex-direction:column;gap:16px}
 </style>
 </head>
 <body>
@@ -190,10 +187,9 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     db: null, ready: false, failed: '',
     docs: new Map(),          // id -> data
     view: 'now',              // 'now' | 'hist'
-    currentId: null,          // item shown in Waiting
     editId: null,             // answered item reopened from History
     drafts: {},               // id -> {keys:Set, otherOn, other, note, noteOpen}
-    busy: false, error: '',
+    busy: '', error: '', errorId: '',  // the item being saved; the last failure and its item
     shownKey: '', animate: false,
     comments: null,           // the comments namespace, or null
     canWake: '',              // last canSendToClaude() answer
@@ -296,13 +292,6 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     const sameDay = d.toDateString() === now.toDateString();
     const hm = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
     return { late: false, text: 'by ' + (sameDay ? hm : d.toLocaleDateString(undefined, { weekday: 'short' }) + ' ' + hm) };
-  }
-  function pickCurrent(){
-    const open = openList();
-    if (S.currentId && isOpen(S.docs.get(S.currentId))) return;
-    const next = open[0];
-    if (next && S.currentId !== next[0]) S.animate = true;
-    S.currentId = next ? next[0] : null;
   }
   function draftFor(id, q){
     if (!S.drafts[id]) {
@@ -467,29 +456,13 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
       key = 'hist:' + JSON.stringify(list);
       if (!force && key === S.shownKey) return;
       html = histHtml(list);
+    } else if (!open.length) {
+      key = 'empty:' + answeredList().length + ':' + JSON.stringify(flightList()) + JSON.stringify(S.lastActive) + JSON.stringify(S.coordinators);
+      if (!force && key === S.shownKey) return;
+      html = emptyHtml();
     } else {
-      pickCurrent();
-      if (!S.currentId) {
-        key = 'empty:' + answeredList().length + ':' + JSON.stringify(flightList()) + JSON.stringify(S.lastActive) + JSON.stringify(S.coordinators);
-        if (!force && key === S.shownKey) return;
-        html = emptyHtml();
-      } else {
-        const q = S.docs.get(S.currentId);
-        const pos = open.findIndex(([id]) => id === S.currentId) + 1;
-        key = 'now:' + S.currentId + JSON.stringify(q) + (misShape(q) ? S.coordinators['dev-ops'] || '' : '');
-        const before = open.slice(0, pos - 1).map(rowHtml).join(''), after = open.slice(pos).map(rowHtml).join('');
-        if (!force && key === S.shownKey) {
-          // same item, same content: only the list around it and the counter move, so typing keeps its caret
-          const c = main.querySelector('.count'); if (c) c.textContent = pos + ' of ' + open.length + ' waiting';
-          const b = main.querySelector('.qbefore'), a = main.querySelector('.qafter');
-          if (b && b.innerHTML !== before) b.innerHTML = before;
-          if (a && a.innerHTML !== after) a.innerHTML = after;
-          return;
-        }
-        html = '<ul class="hist queue qbefore">' + before + '</ul>' +
-          (misShape(q) ? misHtml(S.currentId, q, pos, open.length) : cardHtml(S.currentId, q, 'now', pos, open.length)) +
-          '<ul class="hist queue qafter">' + after + '</ul>';
-      }
+      renderCards(open, force);
+      return;
     }
     S.shownKey = key;
     main.innerHTML = html;
@@ -498,12 +471,45 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     S.animate = false;
   }
 
-  // An open item not being answered: one line in the list; a tap opens it in place.
-  function rowHtml([id, q]){
-    return '<li><button data-pick="' + esc(id) + '">' +
-      '<span class="hmeta">' + tagsHtml(q) + (q.asked ? '<time title="' + esc(full(q.asked)) + '">' + esc(ago(q.asked)) + '</time>' : '') + '</span>' +
-      '<span class="htitle">' + esc(typeof q.title === 'string' && q.title ? q.title : id) + '</span>' +
-    '</button></li>';
+  // Every open item as its own card, oldest first. Each card is redrawn only when its own item, draft,
+// save or error changes, so typing in one card survives another arriving, changing or being answered.
+  function cardKey(id, q){
+    return JSON.stringify(q) + (misShape(q) ? S.coordinators['dev-ops'] || '' : '') + '|' + (S.busy === id) + '|' + (S.errorId === id ? S.error : '');
+  }
+  function cardNode(id, q, pos, total){
+    const t = document.createElement('template');
+    t.innerHTML = misShape(q) ? misHtml(id, q, pos, total) : cardHtml(id, q, 'now', pos, total);
+    const el = t.content.firstElementChild;
+    el.dataset.key = cardKey(id, q);
+    return el;
+  }
+  function renderCards(open, force){
+    let list = main.querySelector(':scope > .cards');
+    if (!list) { main.innerHTML = '<div class="cards"></div>'; list = main.firstElementChild; force = true; }
+    S.shownKey = 'cards';
+    const have = new Map([...list.children].map(el => [el.dataset.id, el]));
+    const want = open.map(([id, q], i) => {
+      let el = have.get(id);
+      have.delete(id);
+      if (!el || force || el.dataset.key !== cardKey(id, q)) {
+        const fresh = cardNode(id, q, i + 1, open.length);
+        if (el) el.replaceWith(fresh);
+        el = fresh;
+      } else {
+        const c = el.querySelector('.count'); if (c) c.textContent = (i + 1) + ' of ' + open.length + ' waiting';
+      }
+      return el;
+    });
+    have.forEach(el => el.remove());
+    want.forEach((el, i) => { if (list.children[i] !== el) list.insertBefore(el, list.children[i] || null); });
+  }
+  // One card redrawn after its own draft changed (an option chosen, the note opened).
+  function refreshCard(id){
+    if (S.view === 'hist') return render(true);
+    const open = openList(), pos = open.findIndex(([i]) => i === id);
+    const el = main.querySelector('.card[data-id="' + CSS.escape(id) + '"]');
+    if (pos < 0 || !el) return render(false);
+    el.replaceWith(cardNode(id, open[pos][1], pos + 1, open.length));
   }
 
   function tagsHtml(q){
@@ -527,7 +533,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     const smallLinks = openLink ? links.slice(1) : links;
     const by = [q.askedBy ? esc(q.askedBy) : '', q.asked ? '<time title="' + esc(full(q.asked)) + '">' + esc(ago(q.asked)) + '</time>' : ''].filter(Boolean).join(' · ');
     const counter = mode === 'now' ? '<span class="count">' + pos + ' of ' + total + ' waiting</span>' : '<span class="count">' + (read ? esc(okWord(q)) : 'Answered') + '</span>';
-    const primary = S.busy ? 'Saving…' : mode === 'edit' ? (read ? okWord(q) + ' again' : 'Update answer') : (read ? okWord(q) : 'Answer');
+    const primary = S.busy === id ? 'Saving…' : mode === 'edit' ? (read ? okWord(q) + ' again' : 'Update answer') : (read ? okWord(q) : 'Answer');
     return '<article class="card" data-id="' + esc(id) + '">' +
       '<div class="meta">' + tagsHtml(q) + (by ? '<span>' + by + '</span>' : '') + counter + '</div>' +
       '<h2 class="qtitle">' + esc(q.title || (read ? 'Update' : 'Untitled question')) + '</h2>' +
@@ -539,10 +545,10 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
       (read ? '' :
       '<fieldset class="opts"><legend class="label" style="margin-bottom:10px">' + (multi ? 'Choose any that apply' : 'Choose one') + '</legend>' +
         opts.map((o, i) =>
-          '<label class="opt"><input type="' + type + '" name="opt" id="opt-' + esc(id) + '-' + i + '" data-key="' + esc(o.key) + '"' + (d.keys.has(String(o.key)) ? ' checked' : '') + '>' +
+          '<label class="opt"><input type="' + type + '" name="opt-' + esc(id) + '" data-opt="1" id="opt-' + esc(id) + '-' + i + '" data-key="' + esc(o.key) + '"' + (d.keys.has(String(o.key)) ? ' checked' : '') + '>' +
           '<span class="olabel">' + esc(o.label || o.key) + (o.recommended ? '<span class="rec">Recommended</span>' : '') + '</span>' +
           (o.description ? '<span class="odesc">' + esc(o.description) + '</span>' : '') + '</label>').join('') +
-        '<label class="opt"><input type="' + type + '" name="opt" id="opt-' + esc(id) + '-other" data-other="1"' + (d.otherOn ? ' checked' : '') + '>' +
+        '<label class="opt"><input type="' + type + '" name="opt-' + esc(id) + '" data-opt="1" id="opt-' + esc(id) + '-other" data-other="1"' + (d.otherOn ? ' checked' : '') + '>' +
           '<span class="olabel">Other…</span><span class="odesc">Write your own answer.</span>' +
           (d.otherOn ? '<div class="otherbox"><textarea id="other-' + esc(id) + '" data-field="other" placeholder="Your answer" aria-label="Your own answer">' + esc(d.other) + '</textarea></div>' : '') +
         '</label>' +
@@ -551,7 +557,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
         ? '<label class="label" for="note-' + esc(id) + '">' + (read ? 'Reply to the coordinator (optional)' : 'Note for the coordinator (optional)') + '</label><textarea id="note-' + esc(id) + '" data-field="note" placeholder="Anything they should know">' + esc(d.note) + '</textarea>'
         : '<button class="linkbtn" data-act="note">' + (read ? '+ Reply' : '+ Add a note') + '</button>') + '</div>' +
       (mode === 'edit' && q.answer?.at ? '<p class="prev">' + (read ? 'Read ' : 'First answered ') + esc(ago(q.answer.at)) + '. Saving replaces that.</p>' : '') +
-      (S.error ? '<p class="err" role="alert">' + esc(S.error) + '</p>' : '') +
+      (S.error && S.errorId === id ? '<p class="err" role="alert">' + esc(S.error) + '</p>' : '') +
       '<div class="actions">' +
         (mode === 'edit' ? '<button class="ghost" data-act="back">Back</button>' : '') +
         '<button class="primary" data-act="answer"' + (canSubmit(d, q) && !S.busy ? '' : ' disabled') + '>' + esc(primary) + '</button>' +
@@ -579,8 +585,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
   function renderStuck(){
     let html = '';
     if (S.ready && !S.failed && S.view === 'now') {
-      pickCurrent();
-      if (S.currentId) {
+      if (openList().length) {
         const flights = flightList();
         const late = flights.filter(([, f]) => dueText(f.expectBy).late);
         const quiet = quietCoordinators(flights).filter(isStale);
@@ -725,16 +730,18 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
   }
 
   // ---------- interaction ----------
-  function activeId(){ return S.view === 'hist' ? S.editId : S.currentId; }
-  function syncButton(){
-    const id = activeId(); const q = S.docs.get(id); const d = id && S.drafts[id];
-    const b = main.querySelector('[data-act="answer"]');
-    if (b && d && q) b.disabled = !canSubmit(d, q) || S.busy;
+  // The item a tap or keystroke belongs to: the card it happened in (History shows one card at a time).
+  function activeId(e){ return S.view === 'hist' ? S.editId : e && e.target.closest('.card')?.dataset.id; }
+  const cardOf = id => main.querySelector('.card[data-id="' + CSS.escape(id) + '"]');
+  function syncButton(id){
+    const q = S.docs.get(id); const d = id && S.drafts[id];
+    const b = cardOf(id)?.querySelector('[data-act="answer"]');
+    if (b && d && q) b.disabled = !canSubmit(d, q) || !!S.busy;
   }
 
   main.addEventListener('change', e => {
-    const inp = e.target.closest('input[name="opt"]'); if (!inp) return;
-    const id = activeId(); const q = S.docs.get(id); if (!q) return;
+    const inp = e.target.closest('input[data-opt]'); if (!inp) return;
+    const id = activeId(e); const q = S.docs.get(id); if (!q) return;
     const d = draftFor(id, q);
     if (q.multi) {
       if (inp.dataset.other) d.otherOn = inp.checked;
@@ -743,15 +750,15 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
       if (inp.dataset.other) { d.otherOn = true; d.keys.clear(); }
       else { d.otherOn = false; d.keys = new Set([inp.dataset.key]); }
     }
-    S.error = '';
-    render(true);
-    if (d.otherOn && inp.dataset.other) main.querySelector('[data-field="other"]')?.focus();
+    if (S.errorId === id) S.error = S.errorId = '';
+    refreshCard(id);
+    if (d.otherOn && inp.dataset.other) cardOf(id)?.querySelector('[data-field="other"]')?.focus();
   });
   main.addEventListener('input', e => {
     const f = e.target.dataset.field; if (!f) return;
-    const id = activeId(); const q = S.docs.get(id); if (!q) return;
+    const id = activeId(e); const q = S.docs.get(id); if (!q) return;
     draftFor(id, q)[f] = e.target.value;
-    syncButton();
+    syncButton(id);
   });
   function restartTap(e){
     const fc = e.target.closest('[data-fcopy]');
@@ -776,7 +783,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     const cp = e.target.closest('[data-copy]');
     if (cp) {
       // the copy button copies; the open button beside it (if any) opens the page in a new tab
-      const q = S.docs.get(activeId()); const c = q && (misShape(q) ? [misReport(activeId(), q)] : copiesOf(q))[+cp.dataset.copy];
+      const cid = activeId(e); const q = S.docs.get(cid); const c = q && (misShape(q) ? [misReport(cid, q)] : copiesOf(q))[+cp.dataset.copy];
       if (!c) return;
       const note = cp.parentElement.querySelector('.cpnote');
       copyText(c.text).then(ok => {
@@ -786,25 +793,14 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
       });
       return;
     }
-    const pick = e.target.closest('[data-pick]');
-    if (pick) { S.currentId = pick.dataset.pick; S.error = ''; S.animate = true; render(true); main.querySelector('.card')?.scrollIntoView({ block: 'start' }); return; }
     const open = e.target.closest('[data-open]');
     if (open) { S.editId = open.dataset.open; S.error = ''; S.animate = true; render(true); window.scrollTo(0, 0); return; }
     const act = e.target.closest('[data-act]')?.dataset.act; if (!act) return;
-    const id = activeId(); const q = S.docs.get(id);
-    if (act === 'note' && q) { draftFor(id, q).noteOpen = true; render(true); main.querySelector('[data-field="note"]')?.focus(); }
+    const id = activeId(e); const q = S.docs.get(id);
+    if (act === 'note' && q) { draftFor(id, q).noteOpen = true; refreshCard(id); cardOf(id)?.querySelector('[data-field="note"]')?.focus(); }
     else if (act === 'back') { S.editId = null; S.error = ''; render(true); }
     else if (act === 'answer') submit(id, q);
   });
-  function leaveThen(fn){
-    const card = main.querySelector('.card');
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const show = () => { const c = main.querySelector('.card'); if (c && main.querySelector('.qbefore li')) c.scrollIntoView({ block: 'start' }); else window.scrollTo(0, 0); };
-    if (!card || reduce) { S.animate = true; fn(); show(); return; }
-    card.classList.add('leave');
-    setTimeout(() => { S.animate = true; fn(); show(); }, 170);
-  }
-
   async function submit(id, q){
     if (!q || S.busy || !S.db) return;
     const d = draftFor(id, q);
@@ -812,35 +808,36 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     const answer = isRead(q)
       ? { keys: [kindOf(q) === 'task' ? 'done' : 'ok'], other: '', note: d.noteOpen ? d.note.trim() : '', at: new Date().toISOString() }
       : { keys: [...d.keys], other: d.otherOn ? d.other.trim() : '', note: d.noteOpen ? d.note.trim() : '', at: new Date().toISOString() };
-    S.busy = true; S.error = ''; syncButton();
-    const b = main.querySelector('[data-act="answer"]'); if (b) b.textContent = 'Saving…';
+    S.busy = id; if (S.errorId === id) S.error = S.errorId = '';
+    const b = cardOf(id)?.querySelector('[data-act="answer"]'); if (b) { b.disabled = true; b.textContent = 'Saving…'; }
     const woken = wakeCoordinator(id, q, answer);   // started now, while the press is fresh
     try {
       await S.db.doc('questions/' + id).update({ status: 'answered', answer });
-      S.busy = false;
+      S.busy = '';
       delete S.drafts[id];
       const wasEdit = S.view === 'hist';
       // reflect locally at once; the snapshot confirms it
       S.docs.set(id, Object.assign({}, q, { status: 'answered', answer }));
       if (wasEdit) { S.editId = null; render(true); }
       else {
-        // the item that followed this one opens next, so the list is worked top to bottom
-        const rest = openList(), at = rest.findIndex(([i]) => (Date.parse(S.docs.get(i).asked) || 0) > (Date.parse(q.asked) || 0) || (i > id && (Date.parse(S.docs.get(i).asked) || 0) === (Date.parse(q.asked) || 0)));
-        S.currentId = rest.length ? rest[at < 0 ? 0 : at][0] : null;
-        leaveThen(() => render(true));
+        // the answered card slides away; the rest stay where they are
+        const card = cardOf(id);
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (card && !reduce) { card.classList.add('leave'); setTimeout(() => render(false), 170); } else render(false);
       }
       woken.then(noteWake);
     } catch (err) {
-      S.busy = false;
+      S.busy = '';
+      S.errorId = id;
       S.error = err && err.code === 'invalid_argument'
         ? 'This could not be saved. Only the page owner can answer, and the item must still exist.'
         : 'This could not be saved. Check your connection and press the button again.';
-      render(true);
+      if (S.view === 'hist') render(true); else refreshCard(id);
     }
   }
 
-  tabNow.addEventListener('click', () => { S.view = 'now'; S.editId = null; S.error = ''; render(true); });
-  tabHist.addEventListener('click', () => { S.view = 'hist'; S.error = ''; render(true); });
+  tabNow.addEventListener('click', () => { S.view = 'now'; S.editId = null; S.error = S.errorId = ''; render(true); });
+  tabHist.addEventListener('click', () => { S.view = 'hist'; S.error = S.errorId = ''; render(true); });
   setInterval(() => { if (!main.querySelector('textarea:focus')) render(true); renderSeen(); if (!S.wakeMsg) refreshWake(); }, 60000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden && !S.wakeMsg) refreshWake(); });
 
