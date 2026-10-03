@@ -48,8 +48,20 @@ button:focus-visible,textarea:focus-visible,a:focus-visible,label.opt:focus-with
 .wake[data-state="available"] .dot,.wake[data-state="sent"] .dot{background:var(--rec)}
 .wake[data-state="asleep"] .dot{background:var(--warn)}
 .wake[data-state="asleep"]{color:var(--warn)}
-.seen{list-style:none;margin:-10px 0 0;padding:0 0 0 16px;font-size:.85rem;color:var(--muted);display:flex;flex-direction:column;gap:2px}
-.seen li.stale{color:var(--warn)}
+.seen{list-style:none;margin:-6px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.seen button{font:700 .88rem/1 var(--f-ui);color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:999px;min-height:40px;padding:0 13px 0 11px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.seen button::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--rec);flex:none}
+.seen button .n{font-variant-numeric:tabular-nums;color:var(--ink);background:var(--accent-soft);border-radius:999px;padding:3px 7px;font-size:.78rem}
+.seen button .age{font-variant-numeric:tabular-nums;font-weight:400;font-size:.8rem;color:var(--faint)}
+.seen button.idle{color:var(--muted);font-weight:400;cursor:default}
+.seen button.stale{border-color:var(--warn)}
+.seen button.stale::before{background:var(--warn)}
+.seen button.stale .age{color:var(--warn);font-weight:700}
+.seen button.parked::before{background:var(--faint)}
+.seen button.all::before{display:none}
+.seen button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.seen button[aria-pressed="true"] .n{background:var(--accent-ink);color:var(--accent)}
+.seen button[aria-pressed="true"] .age{color:var(--accent-ink)}
 .wake[hidden] + .seen{margin-top:0}
 .rearm{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:-6px 0 0}
 .rearm a,.rearm button{font:700 .92rem/1 var(--f-ui);color:var(--accent-ink);background:var(--accent);border:0;border-radius:10px;min-height:44px;padding:0 14px;display:inline-flex;align-items:center;text-decoration:none;cursor:pointer}
@@ -156,13 +168,6 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
 .cards{display:flex;flex-direction:column;gap:16px}
 /* with many cards a button pinned to the screen's foot belongs to a card not yet in view: each sits in its own card */
 .cards .actions{position:static;margin:0;padding:0;background:none}
-/* one chip per project, shown only when items from more than one wait (Ed, 2026-10-03) */
-.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
-.chips[hidden]{display:none}
-.chips button{font:700 .88rem/1 var(--f-ui);color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:999px;min-height:40px;padding:0 14px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
-.chips button .n{font-variant-numeric:tabular-nums;color:var(--muted);font-weight:700}
-.chips button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-.chips button[aria-pressed="true"] .n{color:var(--accent-ink)}
 </style>
 </head>
 <body>
@@ -336,12 +341,45 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
   // Each project's coordinator, with when it last did anything: shown whether or not the comments
   // feature loaded, since the platform only says whether some session is listening, never which.
   const seenEl = document.getElementById('seen');
-  function renderSeen(){
-    const list = Object.entries(S.lastActive).filter(([, a]) => Date.parse(a)).sort(([a], [b]) => a.localeCompare(b));
-    seenEl.innerHTML = list.map(([p, a]) => '<li class="' + (Date.now() - Date.parse(a) > STALE_MS ? 'stale' : '') + '" title="' + esc(full(a)) + '">' +
-      esc(p) + ' coordinator last active ' + esc(ago(a)) + '</li>').join('');
-    seenEl.hidden = !list.length;
+  // One row of project chips (Ed, 2026-10-03: a line per coordinator would only grow; then *you have chips
+  // to filter and pills for this, maybe you can combine them*). Each chip is a project: its dot says how its
+  // coordinator is (green: active in the last two hours; red, with its age: quiet longer; grey: parked, an
+  // open in-flight item <project>-parked or -asleep), its badge how many items wait on Ed. Projects with
+  // items come first, oldest item first; a tap on one filters Waiting to it, a second tap (or All) clears.
+  const shortAgo = iso => { const m = Math.round((Date.now() - Date.parse(iso)) / 60000); return m < 1 ? 'now' : m < 60 ? m + 'm' : m < 1440 ? Math.round(m / 60) + 'h' : Math.round(m / 1440) + 'd'; };
+  function waitingByProject(){
+    const counts = new Map(), names = new Map();
+    openList().forEach(([, q]) => { const k = projectKey(q); counts.set(k, (counts.get(k) || 0) + 1); if (!names.has(k)) names.set(k, String(q.project || 'project')); });
+    return { counts, names };
   }
+  let seenKey = '';
+  function renderSeen(){
+    const { counts, names } = waitingByProject();
+    if (counts.size < 2 || !counts.has(S.chip)) S.chip = '';
+    const parked = new Set(flightList().filter(([id]) => /-(parked|asleep)$/.test(id)).map(([, f]) => projectKey(f)));
+    const known = Object.keys(S.lastActive).filter(p => Date.parse(S.lastActive[p])).sort();
+    const order = [...counts.keys()].concat(known.filter(p => !counts.has(p)));
+    const filtering = counts.size > 1;
+    const total = [...counts.values()].reduce((a, b) => a + b, 0);
+    const chip = p => {
+      const a = S.lastActive[p], n = counts.get(p) || 0;
+      const state = parked.has(p) ? 'parked' : !Date.parse(a) ? '' : Date.now() - Date.parse(a) > STALE_MS ? 'stale' : '';
+      const age = state === 'parked' ? 'parked' : state === 'stale' ? shortAgo(a) : '';
+      const tip = (Date.parse(a) ? p + ' coordinator last active ' + ago(a) + ' (' + full(a) + ')' : p + ': no coordinator time recorded') + (n ? '; ' + n + ' waiting' : '');
+      return '<li><button type="button" class="' + [state, n && filtering ? '' : 'idle'].join(' ').trim() + '"' + (n && filtering ? ' data-chip="' + esc(p) + '" aria-pressed="' + (S.chip === p) + '"' : '') +
+        ' title="' + esc(tip) + '">' + esc(names.get(p) || p) + (n ? ' <span class="n">' + n + '</span>' : '') + (age ? ' <span class="age">' + esc(age) + '</span>' : '') + '</button></li>';
+    };
+    const html = order.length ? (filtering ? '<li><button type="button" class="all" data-chip="" aria-pressed="' + !S.chip + '">All <span class="n">' + total + '</span></button></li>' : '') + order.map(chip).join('') : '';
+    if (html !== seenKey) { seenKey = html; seenEl.innerHTML = html; }
+    seenEl.hidden = !html;
+  }
+  seenEl.addEventListener('click', e => {
+    const c = e.target.closest('[data-chip]'); if (!c) return;
+    const k = c.dataset.chip;
+    S.chip = k && k !== S.chip ? k : '';
+    if (S.view !== 'now') { S.view = 'now'; S.editId = null; }
+    renderSeen(); render(true);
+  });
 
   // Nobody listening: one tap copies the paste-in message and opens that project's
   // coordinator session (each coordinator records its own link in coordinators/<project>).
@@ -451,6 +489,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     tabNow.setAttribute('aria-pressed', String(S.view === 'now'));
     tabHist.setAttribute('aria-pressed', String(S.view === 'hist'));
     renderStuck();
+    renderSeen();
 
     if (S.failed) { main.innerHTML = '<p class="notice">' + esc(S.failed) + '</p>'; S.shownKey = ''; return; }
     if (!S.ready) return;
@@ -495,18 +534,8 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
   }
   function renderCards(all, force){
     let list = main.querySelector(':scope > .cards');
-    if (!list) { main.innerHTML = '<nav class="chips" aria-label="Filter by project" hidden></nav><div class="cards"></div>'; list = main.querySelector('.cards'); force = true; }
+    if (!list) { main.innerHTML = '<div class="cards"></div>'; list = main.querySelector('.cards'); force = true; }
     S.shownKey = 'cards';
-    // projects in order of their oldest waiting item; the filter lapses once its project has nothing waiting
-    const counts = new Map(), names = new Map();
-    all.forEach(([, q]) => { const k = projectKey(q); counts.set(k, (counts.get(k) || 0) + 1); if (!names.has(k)) names.set(k, String(q.project || 'project')); });
-    if (counts.size < 2 || !counts.has(S.chip)) S.chip = '';
-    const chips = main.querySelector('.chips');
-    const chipHtml = counts.size < 2 ? '' :
-      '<button type="button" data-chip="" aria-pressed="' + !S.chip + '">All <span class="n">' + all.length + '</span></button>' +
-      [...counts].map(([k, n]) => '<button type="button" data-chip="' + esc(k) + '" aria-pressed="' + (S.chip === k) + '">' + esc(names.get(k)) + ' <span class="n">' + n + '</span></button>').join('');
-    if (chips.innerHTML !== chipHtml) chips.innerHTML = chipHtml;
-    chips.hidden = !chipHtml;
     const open = S.chip ? all.filter(([, q]) => projectKey(q) === S.chip) : all;
     const have = new Map([...list.children].map(el => [el.dataset.id, el]));
     const want = open.map(([id, q], i) => {
@@ -814,8 +843,6 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
       });
       return;
     }
-    const chip = e.target.closest('[data-chip]');
-    if (chip) { const k = chip.dataset.chip; S.chip = k && k !== S.chip ? k : ''; render(false); return; }
     const open = e.target.closest('[data-open]');
     if (open) { S.editId = open.dataset.open; S.error = ''; S.animate = true; render(true); window.scrollTo(0, 0); return; }
     const act = e.target.closest('[data-act]')?.dataset.act; if (!act) return;
@@ -889,6 +916,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
       const next = new Map();
       snap.docs.forEach(doc => { if (doc.exists) next.set(doc.id, doc.data()); });
       S.flights = next;
+      renderSeen();
       if (S.ready) render(false);
     }, () => {});
     db.collection('questions').onSnapshot(snap => {
