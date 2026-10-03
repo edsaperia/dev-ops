@@ -154,6 +154,15 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
 .notice{color:var(--muted);text-align:center;padding:40px 12px}
 /* Waiting: every open item, each a full card answered where it stands (Ed, 2026-10-03) */
 .cards{display:flex;flex-direction:column;gap:16px}
+/* with many cards a button pinned to the screen's foot belongs to a card not yet in view: each sits in its own card */
+.cards .actions{position:static;margin:0;padding:0;background:none}
+/* one chip per project, shown only when items from more than one wait (Ed, 2026-10-03) */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.chips[hidden]{display:none}
+.chips button{font:700 .88rem/1 var(--f-ui);color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:999px;min-height:40px;padding:0 14px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.chips button .n{font-variant-numeric:tabular-nums;color:var(--muted);font-weight:700}
+.chips button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.chips button[aria-pressed="true"] .n{color:var(--accent-ink)}
 </style>
 </head>
 <body>
@@ -197,6 +206,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     coordinators: {},         // project -> that project's coordinator session URL
     lastActive: {},           // project -> when its coordinator last did anything (ISO)
     flights: new Map(),       // id -> an in-flight item: work a coordinator is waiting on
+    chip: '',                 // the project the Waiting list is filtered to, '' for all
     wakeMsg: '', wakeState: '' // the outcome of the last send, shown until the next check
   };
 
@@ -483,10 +493,21 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     el.dataset.key = cardKey(id, q);
     return el;
   }
-  function renderCards(open, force){
+  function renderCards(all, force){
     let list = main.querySelector(':scope > .cards');
-    if (!list) { main.innerHTML = '<div class="cards"></div>'; list = main.firstElementChild; force = true; }
+    if (!list) { main.innerHTML = '<nav class="chips" aria-label="Filter by project" hidden></nav><div class="cards"></div>'; list = main.querySelector('.cards'); force = true; }
     S.shownKey = 'cards';
+    // projects in order of their oldest waiting item; the filter lapses once its project has nothing waiting
+    const counts = new Map(), names = new Map();
+    all.forEach(([, q]) => { const k = projectKey(q); counts.set(k, (counts.get(k) || 0) + 1); if (!names.has(k)) names.set(k, String(q.project || 'project')); });
+    if (counts.size < 2 || !counts.has(S.chip)) S.chip = '';
+    const chips = main.querySelector('.chips');
+    const chipHtml = counts.size < 2 ? '' :
+      '<button type="button" data-chip="" aria-pressed="' + !S.chip + '">All <span class="n">' + all.length + '</span></button>' +
+      [...counts].map(([k, n]) => '<button type="button" data-chip="' + esc(k) + '" aria-pressed="' + (S.chip === k) + '">' + esc(names.get(k)) + ' <span class="n">' + n + '</span></button>').join('');
+    if (chips.innerHTML !== chipHtml) chips.innerHTML = chipHtml;
+    chips.hidden = !chipHtml;
+    const open = S.chip ? all.filter(([, q]) => projectKey(q) === S.chip) : all;
     const have = new Map([...list.children].map(el => [el.dataset.id, el]));
     const want = open.map(([id, q], i) => {
       let el = have.get(id);
@@ -793,6 +814,8 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
       });
       return;
     }
+    const chip = e.target.closest('[data-chip]');
+    if (chip) { const k = chip.dataset.chip; S.chip = k && k !== S.chip ? k : ''; render(false); return; }
     const open = e.target.closest('[data-open]');
     if (open) { S.editId = open.dataset.open; S.error = ''; S.animate = true; render(true); window.scrollTo(0, 0); return; }
     const act = e.target.closest('[data-act]')?.dataset.act; if (!act) return;
