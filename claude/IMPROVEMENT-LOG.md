@@ -45,6 +45,9 @@ The record kept by the daily improvement review ([`IMPROVEMENT.md`](IMPROVEMENT.
 | 2026-10-02 | Admit (sent): a builder subscribed to its PR never woke for the coordinator's review comments (nwspk/web#53) | 22 min idle until a nudge | All agents post as Ed's account, so a COORDINATOR: comment looks like the builder's own echo | CONVENTIONS: the nudge after every COORDINATOR: comment stays; C5 refined |
 | 2026-10-02 | ae: the Claude app reaches it; PR events arrived at once (subscription and merge) | — | — | — |
 | 2026-10-02 | ae (sent): the watch-armed check in QUESTIONS-PAGE.md names wording a cloud session never shows | A check that can't pass as written | Cloud sessions word the watch listing differently | QUESTIONS-PAGE names both wordings |
+| 2026-10-03 | The page offered Ed a nudge for the Topic coordinator while two of its questions waited on him (Ed) | Ed asked what to do with nudges to coordinators that have nothing to do | *Quiet* counted only in-flight work, not items waiting on Ed; no way to park an idle project but mergetournament's improvised one | Page v15: waiting on Ed is not quiet; parking is a rule |
+| 2026-10-03 | Ed could see only one waiting item at a time (Ed) | Nine items behind *Later*; no overview | One-at-a-time design from 2026-09-26 | Page v15 lists them all |
+| 2026-10-03 | Dev-ops wrote [01:19] and [01:24] in chat at 01:17 real time, guessed instead of read | Two wrong times shown to Ed | Third time-guess in two days (after dev-ops on 10-02 and Topic) | Read `date -u` before every timestamp in chat too, as AGENTS.md already says |
 
 ## Changes
 
