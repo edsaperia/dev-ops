@@ -48,6 +48,7 @@ The record kept by the daily improvement review ([`IMPROVEMENT.md`](IMPROVEMENT.
 | 2026-10-03 | The page offered Ed a nudge for the Topic coordinator while two of its questions waited on him (Ed) | Ed asked what to do with nudges to coordinators that have nothing to do | *Quiet* counted only in-flight work, not items waiting on Ed; no way to park an idle project but mergetournament's improvised one | Page v15: waiting on Ed is not quiet; parking is a rule |
 | 2026-10-03 | Ed could see only one waiting item at a time (Ed) | Nine items behind *Later*; no overview | One-at-a-time design from 2026-09-26 | Page v15 lists them all |
 | 2026-10-03 | Dev-ops wrote [01:19] and [01:24] in chat at 01:17 real time, guessed instead of read | Two wrong times shown to Ed | Third time-guess in two days (after dev-ops on 10-02 and Topic) | Read `date -u` before every timestamp in chat too, as AGENTS.md already says |
+| 2026-10-03 | Topic (sent): a question to Ed called the email digest *all-or-nothing, one dropdown*, taken from a July journal entry; August's #254 had restored per-kind switches. Ed caught it with a production screenshot | One wrong question withdrawn and re-posted; Ed had to check | Stated how the product behaves now from a history record, not the code or live page | Candidate: before a coordinator tells Ed how the product behaves now, it checks the current code or the live page, never a journal alone |
 
 ## Changes
 
