@@ -152,6 +152,11 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
 .hist .hmeta{display:flex;gap:8px;align-items:center;font-size:.8rem;color:var(--faint)}
 .hist .hmeta time{margin-left:auto;font-variant-numeric:tabular-nums}
 .notice{color:var(--muted);text-align:center;padding:40px 12px}
+/* Waiting: every open item listed, the one being answered opened in place (Ed, 2026-10-03) */
+#main{display:flex;flex-direction:column;gap:10px}
+.queue:empty{display:none}
+.queue .htitle{font-weight:400}
+.card{scroll-margin-top:72px}
 </style>
 </head>
 <body>
@@ -188,7 +193,6 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     currentId: null,          // item shown in Waiting
     editId: null,             // answered item reopened from History
     drafts: {},               // id -> {keys:Set, otherOn, other, note, noteOpen}
-    skipped: new Set(),
     busy: false, error: '',
     shownKey: '', animate: false,
     comments: null,           // the comments namespace, or null
@@ -296,8 +300,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
   function pickCurrent(){
     const open = openList();
     if (S.currentId && isOpen(S.docs.get(S.currentId))) return;
-    let next = open.find(([id]) => !S.skipped.has(id));
-    if (!next && open.length) { S.skipped.clear(); next = open[0]; }
+    const next = open[0];
     if (next && S.currentId !== next[0]) S.animate = true;
     S.currentId = next ? next[0] : null;
   }
@@ -474,14 +477,18 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
         const q = S.docs.get(S.currentId);
         const pos = open.findIndex(([id]) => id === S.currentId) + 1;
         key = 'now:' + S.currentId + JSON.stringify(q) + (misShape(q) ? S.coordinators['dev-ops'] || '' : '');
+        const before = open.slice(0, pos - 1).map(rowHtml).join(''), after = open.slice(pos).map(rowHtml).join('');
         if (!force && key === S.shownKey) {
-          // same item, same content: only the counter moves, so typing keeps its caret
+          // same item, same content: only the list around it and the counter move, so typing keeps its caret
           const c = main.querySelector('.count'); if (c) c.textContent = pos + ' of ' + open.length + ' waiting';
-          const skip = main.querySelector('[data-act="skip"]');
-          if (!skip && open.length > 1) { const a = main.querySelector('.actions'); if (a) a.insertAdjacentHTML('afterbegin', '<button class="ghost" data-act="skip">Later</button>'); }
+          const b = main.querySelector('.qbefore'), a = main.querySelector('.qafter');
+          if (b && b.innerHTML !== before) b.innerHTML = before;
+          if (a && a.innerHTML !== after) a.innerHTML = after;
           return;
         }
-        html = misShape(q) ? misHtml(S.currentId, q, pos, open.length) : cardHtml(S.currentId, q, 'now', pos, open.length);
+        html = '<ul class="hist queue qbefore">' + before + '</ul>' +
+          (misShape(q) ? misHtml(S.currentId, q, pos, open.length) : cardHtml(S.currentId, q, 'now', pos, open.length)) +
+          '<ul class="hist queue qafter">' + after + '</ul>';
       }
     }
     S.shownKey = key;
@@ -489,6 +496,14 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     const card = main.querySelector('.card');
     if (card && S.animate) card.classList.add('enter');
     S.animate = false;
+  }
+
+  // An open item not being answered: one line in the list; a tap opens it in place.
+  function rowHtml([id, q]){
+    return '<li><button data-pick="' + esc(id) + '">' +
+      '<span class="hmeta">' + tagsHtml(q) + (q.asked ? '<time title="' + esc(full(q.asked)) + '">' + esc(ago(q.asked)) + '</time>' : '') + '</span>' +
+      '<span class="htitle">' + esc(typeof q.title === 'string' && q.title ? q.title : id) + '</span>' +
+    '</button></li>';
   }
 
   function tagsHtml(q){
@@ -538,14 +553,13 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
       (mode === 'edit' && q.answer?.at ? '<p class="prev">' + (read ? 'Read ' : 'First answered ') + esc(ago(q.answer.at)) + '. Saving replaces that.</p>' : '') +
       (S.error ? '<p class="err" role="alert">' + esc(S.error) + '</p>' : '') +
       '<div class="actions">' +
-        (mode === 'edit' ? '<button class="ghost" data-act="back">Back</button>'
-          : (total > 1 ? '<button class="ghost" data-act="skip">Later</button>' : '')) +
+        (mode === 'edit' ? '<button class="ghost" data-act="back">Back</button>' : '') +
         '<button class="primary" data-act="answer"' + (canSubmit(d, q) && !S.busy ? '' : ' disabled') + '>' + esc(primary) + '</button>' +
       '</div>' +
     '</article>';
   }
 
-  // A mis-shaped item: what is wrong, and one tap that reports it; no answer controls, Later as on any card.
+  // A mis-shaped item: what is wrong, and one tap that reports it; no answer controls; the other waiting items stay listed around it.
   function misHtml(id, q, pos, total){
     const r = misReport(id, q);
     const by = [q.askedBy ? esc(q.askedBy) : '', q.asked ? '<time title="' + esc(full(q.asked)) + '">' + esc(ago(q.asked)) + '</time>' : ''].filter(Boolean).join(' · ');
@@ -555,7 +569,6 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
       '<p class="prev">This item is mis-shaped (' + esc(misShape(q)) + '), so it cannot be answered here. One tap reports it to the dev-ops coordinator, who repairs it.</p>' +
       (q.context || q.body ? '<div class="ctx">' + richText(String(q.context || q.body)) + '</div>' : '') +
       '<div class="copies">' + copyPairHtml('data-copy', 0, r.label, r.url) + '<p class="cpnote" aria-live="polite"></p></div>' +
-      '<div class="actions">' + (total > 1 ? '<button class="ghost" data-act="skip">Later</button>' : '') + '</div>' +
     '</article>';
   }
 
@@ -587,7 +600,8 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
   // silence is attributed to a named coordinator, never asserted as a fact about the work.
   const STALE_MS = 2 * 3600e3;
   function quietCoordinators(flights){
-    const busy = new Set(flights.map(([, f]) => projectKey(f)));
+    // with an item open on this page it is waiting on Ed, not quiet, so it gets no nudge (Ed, 2026-10-03)
+    const busy = new Set(flights.map(([, f]) => projectKey(f)).concat(openList().map(([, q]) => projectKey(q))));
     const known = new Set([...Object.keys(S.coordinators), ...Object.keys(S.lastActive)]);
     return [...known].filter(p => !busy.has(p)).sort();
   }
@@ -772,21 +786,23 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
       });
       return;
     }
+    const pick = e.target.closest('[data-pick]');
+    if (pick) { S.currentId = pick.dataset.pick; S.error = ''; S.animate = true; render(true); main.querySelector('.card')?.scrollIntoView({ block: 'start' }); return; }
     const open = e.target.closest('[data-open]');
     if (open) { S.editId = open.dataset.open; S.error = ''; S.animate = true; render(true); window.scrollTo(0, 0); return; }
     const act = e.target.closest('[data-act]')?.dataset.act; if (!act) return;
     const id = activeId(); const q = S.docs.get(id);
     if (act === 'note' && q) { draftFor(id, q).noteOpen = true; render(true); main.querySelector('[data-field="note"]')?.focus(); }
     else if (act === 'back') { S.editId = null; S.error = ''; render(true); }
-    else if (act === 'skip') { S.skipped.add(S.currentId); S.currentId = null; S.error = ''; leaveThen(() => render(true)); }
     else if (act === 'answer') submit(id, q);
   });
   function leaveThen(fn){
     const card = main.querySelector('.card');
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (!card || reduce) { S.animate = true; fn(); window.scrollTo(0, 0); return; }
+    const show = () => { const c = main.querySelector('.card'); if (c && main.querySelector('.qbefore li')) c.scrollIntoView({ block: 'start' }); else window.scrollTo(0, 0); };
+    if (!card || reduce) { S.animate = true; fn(); show(); return; }
     card.classList.add('leave');
-    setTimeout(() => { S.animate = true; fn(); window.scrollTo(0, 0); }, 170);
+    setTimeout(() => { S.animate = true; fn(); show(); }, 170);
   }
 
   async function submit(id, q){
@@ -807,7 +823,12 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
       // reflect locally at once; the snapshot confirms it
       S.docs.set(id, Object.assign({}, q, { status: 'answered', answer }));
       if (wasEdit) { S.editId = null; render(true); }
-      else { S.currentId = null; leaveThen(() => render(true)); }
+      else {
+        // the item that followed this one opens next, so the list is worked top to bottom
+        const rest = openList(), at = rest.findIndex(([i]) => (Date.parse(S.docs.get(i).asked) || 0) > (Date.parse(q.asked) || 0) || (i > id && (Date.parse(S.docs.get(i).asked) || 0) === (Date.parse(q.asked) || 0)));
+        S.currentId = rest.length ? rest[at < 0 ? 0 : at][0] : null;
+        leaveThen(() => render(true));
+      }
       woken.then(noteWake);
     } catch (err) {
       S.busy = false;
