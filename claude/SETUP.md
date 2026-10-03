@@ -35,7 +35,7 @@ Safety, by design of `anthropics/claude-code-action`: only people with write acc
 
 The order the dev-ops coordinator follows when Ed brings a project in, new or existing (2026-10-02, admissions). Each step names who does it; Ed's steps go on his questions page as tasks with a one-tap button.
 
-1. **Reach the repository** (dev-ops). Attach it with `add_repo`. If it can't be reached, the Claude GitHub app needs access to it, which only the owner can give. Put a task on Ed's page with a large button to https://github.com/apps/claude/installations/select_target, since nothing else can proceed.
+1. **Reach the repository** (dev-ops). For a new project with no repository yet, Ed creates the empty repository: a task on his page with a large button to `https://github.com/new?owner=edsaperia&name=<project>&visibility=private` (a cloud session cannot create one: the safety check and GitHub's proxy both refuse it, Witch 2026-10-03), then the coordinator is opened on it. For an existing one, attach it with `add_repo`. If it can't be reached, the Claude GitHub app needs access to it, which only the owner can give. Put a task on Ed's page with a large button to https://github.com/apps/claude/installations/select_target, since nothing else can proceed.
 2. **Read it** (dev-ops, a subagent on Opus allowed). Find out:
    - what it is and who uses it;
    - whether a push to `main` deploys, and how;
