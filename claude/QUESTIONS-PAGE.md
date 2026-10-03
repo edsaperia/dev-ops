@@ -12,6 +12,7 @@ The page where coordinators on Ed's projects put questions only Ed can answer, a
   - 2026-10-01 (v12): mis-shaped items report themselves to the dev-ops coordinator.
   - 2026-10-02 (v13): an item written without `status` shows, as mis-shaped, instead of staying invisible; so do options without keys.
   - 2026-10-02 (v14): a `copy` or `restart` with a `url` shows as two big buttons, *1 · copy* then *2 · open*, instead of one button that copies and opens at once (Ed: *split this into two big buttons*). A `label` written *Copy X, open Y* names the two buttons *Copy X* and *Open Y*.
+  - 2026-10-03 (v16): every waiting item fully open at once, each answerable in place, instead of one open and the rest as lines (Ed: *every item fully open please*).
   - 2026-10-03 (v15): *Waiting* lists every open item, the one being answered opened in place, instead of one at a time behind *Later* (Ed: *I'd like to see all outstanding items in the list*). A coordinator with an item open on the page is waiting on Ed, so it is no longer shown as quiet or given a nudge (Ed: *what do we do about tasks to awaken coordinators that have no outstanding jobs?*).
 - **Source:** [`questions-page.html`](questions-page.html) in this folder is the published page. Change it here, republish it with the Artifact tool (`url` the page above, capabilities restated in full — `{"db":{"rules":[{"path":"","read":"owner","write":"owner"}]},"user":{},"comments":{}}` — since a publish that names capabilities replaces the whole set), and commit the file in the same PR.
 
@@ -36,7 +37,7 @@ One document per item. An item is a **question** (choose among options), an **up
 | `answer` | `{keys: [..], other: string, note: string, at: ISO}` | page | Ed's answer. `keys` are option keys (may be empty when he wrote only *Other*); for an update it is `["ok"]`, for a task `["done"]`; `other` is his own answer text or `""`; `note` is his note (or reply) to you or `""` |
 | `handledAt` | ISO datetime | coordinator | optional: set once the coordinator has acted on the answer |
 
-*Waiting* lists every open item, oldest `asked` first (Ed, 2026-10-03: *I'd like to see all outstanding items in the list, not just one at a time*). The oldest is open in place as a full card, with its answer controls; each of the others is one line (its tags, how long ago it was asked, its title), and a tap on a line opens that item in place instead. Once Ed answers, the item that followed it opens next, so the list is worked top to bottom. A new item arriving while Ed types joins the list without disturbing the card he is in.
+*Waiting* shows every open item as a full card, oldest `asked` first, each answered where it stands (Ed, 2026-10-03: *I'd like to see all outstanding items in the list, not just one at a time*, then *every item fully open please*). Each card carries *n of N waiting*. An answered card slides away and the rest stay put. Each card is redrawn only when its own item changes, so a choice made or a note half-typed in one card survives another item arriving, changing or being answered.
 
 The page only ever `update`s `status` and `answer`, never anything else. Ed can change an answer later from History: that rewrites `answer` (with a new `at`) and leaves `status` as `answered`. Withdrawn questions are not shown anywhere on the page.
 
