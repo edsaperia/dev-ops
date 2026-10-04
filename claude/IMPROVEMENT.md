@@ -17,6 +17,7 @@ Measured for the 24 hours to the review, per project with work that day (draft: 
 | PRs merged | merged PRs in the window | throughput |
 | Open → merged, median and worst | PR `created_at` → `merged_at` | lead time; small PRs should be well under 2 h |
 | …split in three | open → its Merge question `asked`, `asked` → `answer.at`, `answer.at` → `merged_at` (medians) | which stage holds the hours: building and review, Ed, or the merge (2026-10-03: 4.3 h / 10 min / 4 min) |
+| …and the coordinator's two gaps | green and finished (FINAL) → its Merge question `asked`; Ed's Merge → `merged_at` (medians, draft) | the coordinator's own waits, apart from Ed's (2026-10-04: #216 3.5 h, #214 4.8 h) |
 | Merge-main commits | commits titled *Merge main …* / *Merge remote-tracking branch 'origin/main' …* on PR branches | re-run waste |
 | Deploy wait on `main` | for each push run on `main`: the `ci` job's `started_at` − the run's `created_at` | machine queue |
 | Reds on `main` | push runs on `main` (CI and Sprint) not `success` | escaped defects |
