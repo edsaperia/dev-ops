@@ -79,6 +79,7 @@ The record kept by the daily improvement review ([`IMPROVEMENT.md`](IMPROVEMENT.
 | 2026-10-05 | Witch: 26 merge-main commits across 20 merged PRs (11 on #6, the reused prototype branch) | Re-runs; the same pattern C3 met in draft | Unknown: shared files edited by every PR, or a long-lived branch | Sent to the Witch coordinator |
 | 2026-10-05 | Draft coordinator has not answered the 10-04 questions (#216 and #214 gaps, the Sprint red) after 24 h; idle since 10-04 11:32 | C13's cause still unnamed | A Sunday; the poke is a chat message, not a page item | Re-ask at the 10-06 check |
 | 2026-10-05 | Dev-ops wrote [07:13] in chat and 07:15 in the log at 07:02 real time, guessed ahead of the clock (fourth time) | One wrong time shown to Ed; two log cells corrected | Wrote the stamp while composing, with no `date` call in that turn | Rule kept: no time is written without a `date -u` in the same turn; candidate for C16 if it recurs |
+| 2026-10-05 | Ed asked whether page items were stale. Witch's two overdue in-flight items were still open 8 h after dev-ops's morning poke, Topic's keys item went overdue at 09:00, and six items had waited on Ed 40–68 h with no check that they were still current (admit 2, ae 2, Topic 2) | Ed had to ask; four coordinators poked at 14:54 | A chat poke is easy to drop, and nothing checks whether an old item is still current | Candidate: the daily review lists open items over 24 h old and asks their owners to confirm or withdraw them |
 
 ## Changes
 
