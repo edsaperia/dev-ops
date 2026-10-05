@@ -19,11 +19,11 @@ Measured for the 24 hours to the review, per project with work that day (draft: 
 | …split in three | open → its Merge question `asked`, `asked` → `answer.at`, `answer.at` → `merged_at` (medians) | which stage holds the hours: building and review, Ed, or the merge (2026-10-03: 4.3 h / 10 min / 4 min) |
 | …and the coordinator's two gaps | green and finished (FINAL) → its Merge question `asked`; Ed's Merge → `merged_at` (medians, draft) | the coordinator's own waits, apart from Ed's (2026-10-04: #216 3.5 h, #214 4.8 h) |
 | Merge-main commits | commits titled *Merge main …* / *Merge remote-tracking branch 'origin/main' …* on PR branches | re-run waste |
-| Deploy wait on `main` | for each push run on `main`: the `ci` job's `started_at` − the run's `created_at` | machine queue |
+| Deploy wait on `main` | for each push run on `main`: the `ci` job's `started_at` − the run's `created_at`; written only when a wait is over 2 min (2026-10-05, C14) | machine queue |
 | Reds on `main` | push runs on `main` (CI and Sprint) not `success` | escaped defects |
 | Ed's answers, median and over 90 min | page items: `answer.at` − `asked` | Ed's waits; slow ones are a cause, not a fault |
 | Items asked of Ed, by kind | page items asked in the window | how much of Ed's attention the work takes |
-| Mis-shaped or refused writes | items without status, unknown kind, guard refusals | page quality |
+| Mis-shaped or refused writes | items without status, unknown kind, guard refusals; written only when non-zero (2026-10-05, C14) | page quality |
 | In-flight items gone overdue | `inflight` past `expectBy` without an update | silent waits |
 | Bugs Ed found | issues or notes from Ed reporting something broken | quality as Ed sees it |
 
