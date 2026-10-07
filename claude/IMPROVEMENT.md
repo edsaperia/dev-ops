@@ -32,7 +32,7 @@ A subagent (Opus) may gather the numbers; the coordinator checks them before the
 ## 3. The review, daily
 
 1. **Check predictions due.** Each row of the *Changes* table whose check date has come: compare the numbers with the prediction and write the result. *Holds*: keep it. *Missed*: find out why and either fix it or propose undoing it. A change is never left unexamined.
-2. **Write today's numbers** and compare them with the last few rows. Close or re-promise any of dev-ops's own in-flight items whose work has moved on. Then list every item open on Ed's page for over 48 hours and every overdue in-flight item: ask each owner to confirm it is current or withdraw it, and name the confirmed ones in the report, so Ed sees what he is holding (2026-10-06, C16).
+2. **Write today's numbers** and compare them with the last few rows. Close or re-promise any of dev-ops's own in-flight items whose work has moved on. Then list every item open on Ed's page for over 48 hours and every overdue in-flight item: ask each owner once to confirm it is current or withdraw it (an item its owner confirmed is not asked again for a week), and name the confirmed ones in the report, so Ed sees what he is holding (2026-10-06, C16).
 3. **Read the friction log since the last review.** Group it by cause; a cause seen twice is a candidate.
 4. **Choose at most two improvements.** Rank by time or quality saved, against what each costs and risks. Prefer removing a step over adding one, and a measurement over a guess. Never take a check away unless a number shows it costs more than it catches.
 5. **Act.**

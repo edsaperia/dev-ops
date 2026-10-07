@@ -29,6 +29,11 @@ The record kept by the daily improvement review ([`IMPROVEMENT.md`](IMPROVEMENT.
 | 2026-10-06 06:57 | topic | 1 (#387, 53 h, waited on the repo owner) | 53 h | 0 | — | 0 on main; production deploy (manual) failed 14:42 | 1184 min / 2 | 1 / 1 / 0 | — | 0 | 0 |
 | 2026-10-06 06:57 | dev-ops | 5 | 0 h | 0 | — | 0 | 473 min / 3 | 1 / 2 / 0 | — | 0 | 0 |
 | 2026-10-06 06:57 | admit, ae, mergetournament | 0 | — | 0 | — | 0 | — | 0 / 0 / 0 | — | 0 | 0 |
+| 2026-10-07 06:57 | draft | 1 (#226) | 12.0 h | 0 | — | 0 (4 runs, all green) | 844 min / 3 | 2 / 1 / 0 | — | 0 | 0 |
+| 2026-10-07 06:57 | witch | 4 into main (10.0 h / 14.0 h, release bundles) and 214 into prototype (0.91 h median, small 0.60 h, worst 7.0 h); git history only | see Merged | 333 *merge prototype* commits on 157 of 214 branches (73%) | not measurable | not measurable | — (off the page since 10-05 16:25) | 0 / 0 / 0 | — | 0 | 0 |
+| 2026-10-07 06:57 | admit | nwspk/web not reachable | — | — | — | — | — | 3 / 1 / 0 | — | 0 | 0 |
+| 2026-10-07 06:57 | dev-ops | 3 | 0 h | 0 | — | 0 | 42 min / 0 | 0 / 1 / 0 | — | 0 | 0 |
+| 2026-10-07 06:57 | topic, ae, mergetournament | 0 | — | 0 | — | 0 | — | 0 / 0 / 0 | — | 0 | 0 |
 
 ## Friction
 
@@ -90,6 +95,8 @@ The record kept by the daily improvement review ([`IMPROVEMENT.md`](IMPROVEMENT.
 | 2026-10-06 | Admit and ae: four items wait on Ed 65–84 h (admit: phase 1 go-ahead, admissions@ mailbox; ae: visa steps A2, A3); both coordinators confirm all four are still current | Work held for Ed for 3 days | Ed's choice of priorities; nothing reminded him | The review now lists items over 2 days old (C16) |
 | 2026-10-06 | Dev-ops wrote C16's time as 07:10 at 07:01, though `date` ran in the same command; caught before merge | None reached Ed | The stamp was typed into the script text, not taken from the clock's output (fifth slip) | Stamps in scripts come from the clock in the script itself (`datetime.now`), never typed |
 | 2026-10-06 | Admit (sent): @sirodoht replied on nwspk/web#52 at 10-05 13:19 (the blocker in inflight/admit-sirodoht-advice); admit saw it at 10-06 07:44, ~18 h later | ~18 h on a blocker Ed was waiting on | Issue comments wake no session (PR subscriptions cover PRs only); every wake in between was another project's page comment, dropped on its thread id alone | Candidate for the 10-07 review: a coordinator waiting on an issue reply re-reads that issue on every wake, its own or not; or it waits through a draft PR, whose comments do wake it |
+| 2026-10-07 | Draft: #226 merged at 07:44:00 while its third CI attempt (started 07:43:37) was still running; attempts 1 and 2 had ended *failure* with every job cancelled, so it merged with no green on its head. Main's CI went green on the merge commit | A deploy without the PR's own green; no harm this time | Unknown: likely read the cancelled-only failures as noise and merged on the re-run's start | Sent to the draft coordinator |
+| 2026-10-07 | Witch: 333 *merge prototype* commits on 157 of 214 feature branches in a day (73%), up from 64% the day before | Re-runs on most branches | A long-lived integration branch every PR merges into; Ed handles Witch in its own session | Mentioned to Ed in the review; not pressed |
 
 ## Changes
 
@@ -111,3 +118,4 @@ The record kept by the daily improvement review ([`IMPROVEMENT.md`](IMPROVEMENT.
 | C14 | Weekly trim: the *Deploy wait* and *Mis-shaped* columns are written only when non-zero (an exception), since C7 and C2 hold and both read zero for three days | 2026-10-05 07:02 | The daily numbers take less to gather with nothing lost: any wait over 2 min or any mis-shaped item still shows | 2026-10-12 | |
 | C15 | Proposed to Ed: a builder that posts `FINAL:` also wakes its coordinator directly (a one-shot Routine into the coordinator's session, as dev-ops pokes coordinators); the *finished* card stays on the page as an OK-only note (Ed kept report cards, C11), but the review no longer waits for his tap | 2026-10-05 07:02 (asked); chosen by Ed 14:55, rule merged the same hour | FINAL → coordinator's review under 15 min median (Witch now: 1 h by day, 9–11 h overnight); no in-flight item overdue because a finished builder went unreviewed | 2026-10-08 | Chosen by Ed 10-05 14:55. First sign: Witch #107 at 15:53 posted *the coordinator is reviewing it*, under an hour after the rule |
 | C16 | The review's step 2 lists every item open on Ed's page over 48 h and every overdue in-flight item, asks each owner to confirm or withdraw it, and names the confirmed ones in the report so Ed sees what he is holding | 2026-10-06 07:01 | No item stays open on the page over 48 h without its owner confirming it that day; Ed hears of each long wait at most once a day | 2026-10-09 | |
+| C17 | A coordinator re-reads whatever it waits on outside a pull request (an issue reply, a person's answer) on every wake, its own project's or not; such an in-flight item names it under `links` (QUESTIONS-PAGE.md). C16 trimmed: an owner confirms a long-waiting item once a week, not daily | 2026-10-07 07:02 | No outside reply waits over 2 h unseen while wakes are arriving | 2026-10-10 | |
