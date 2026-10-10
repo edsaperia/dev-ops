@@ -40,7 +40,7 @@ A subagent (Opus) may gather the numbers; the coordinator checks them before the
    - Anything else goes to Ed as a question on his page, one change per question, with its prediction and check date in the context.
    - Every change, adopted or proposed, gets a row in *Changes*.
 6. **Sweep finished builders.** Archive any builder session whose PRs are all merged or closed and that has been idle a day (CONVENTIONS.md, *A finished builder is archived*), and count them in the report.
-7. **Report** with one OK-only update on Ed's page: the headline numbers, what changed, what was checked, and the questions raised. When nothing is worth his attention, the update says so in one line.
+7. **Report** with one OK-only update on Ed's page (on a quiet day, when nothing changed and Ed has not answered the last one, update that card in place instead of posting another: 2026-10-10, C18): the headline numbers, what changed, what was checked, and the questions raised. When nothing is worth his attention, the update says so in one line.
 
 **Monday's review also looks back a week**: it reads the trend across the week's rows and the week's friction as a whole, and trims anything in the method that has not earned its keep.
 
