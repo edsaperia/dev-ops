@@ -10,7 +10,7 @@ Whenever something costs time or quality, the dev-ops coordinator appends one li
 
 ## 2. The daily numbers
 
-Measured for the 24 hours to the review, per project with work that day (draft: GitHub plus the page), and written as one row of the log's *Numbers* table:
+Measured for the 24 hours to the review, per project with work that day (draft: GitHub plus the page), except that a project Ed runs directly, off the page, is counted as merges only (2026-10-12, C19), and written as one row of the log's *Numbers* table:
 
 | Number | How | Why |
 |---|---|---|
