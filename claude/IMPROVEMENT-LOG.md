@@ -50,6 +50,7 @@ The record kept by the daily improvement review ([`IMPROVEMENT.md`](IMPROVEMENT.
 | 2026-10-18 06:57 | all | 0 everywhere, Witch included (git); nothing red | — | — | — | 0 | none answered | 0 / 0 / 0 (card updated in place) | — | 0 | 0 |
 | 2026-10-19 06:57 | all | Witch 12 merges (590 in the week, git); draft, Topic, ae 0 (API) all week; nothing red | — | — | — | 0 | none answered all week | 0 / 0 / 0 (card updated in place) | — | 0 | 0 |
 | 2026-10-20 06:57 | all | Witch 35 merges (git); draft, Topic, ae 0 (API); nothing red | — | — | — | 0 | none answered | 0 / 0 / 0 (card updated in place) | — | 0 | 0 |
+| 2026-10-21 06:57 | all | Witch 24 merges (git); draft, Topic, ae 0 (API); nothing red | — | — | — | 0 | none answered | 0 / 0 / 0 (card updated in place; weekly confirmation of long waits sent to admit, ae, Topic and draft) | — | 0 | 0 |
 
 ## Friction
 
