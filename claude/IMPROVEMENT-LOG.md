@@ -51,6 +51,7 @@ The record kept by the daily improvement review ([`IMPROVEMENT.md`](IMPROVEMENT.
 | 2026-10-19 06:57 | all | Witch 12 merges (590 in the week, git); draft, Topic, ae 0 (API) all week; nothing red | — | — | — | 0 | none answered all week | 0 / 0 / 0 (card updated in place) | — | 0 | 0 |
 | 2026-10-20 06:57 | all | Witch 35 merges (git); draft, Topic, ae 0 (API); nothing red | — | — | — | 0 | none answered | 0 / 0 / 0 (card updated in place) | — | 0 | 0 |
 | 2026-10-21 06:57 | all | Witch 24 merges (git); draft, Topic, ae 0 (API); nothing red | — | — | — | 0 | none answered | 0 / 0 / 0 (card updated in place; weekly confirmation of long waits sent to admit, ae, Topic and draft) | — | 0 | 0 |
+| 2026-10-22 06:57 | all | Witch 26 merges (git); draft, Topic, ae 0 (API); nothing red | — | — | — | 0 | none answered | 0 / 0 / 0; after the weekly confirmation draft withdrew its #226 note, the rest confirmed (11 waiting) | — | 0 | 0 |
 
 ## Friction
 
