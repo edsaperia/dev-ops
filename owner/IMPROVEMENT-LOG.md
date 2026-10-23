@@ -1,6 +1,6 @@
 # Improvement log
 
-The record kept by the daily improvement review ([`IMPROVEMENT.md`](IMPROVEMENT.md)): the numbers, the friction, and every change with its prediction. Newest rows at the bottom of each table. Times are UTC.
+The record kept by the daily improvement review ([`claude/IMPROVEMENT.md`](../claude/IMPROVEMENT.md)): the numbers, the friction, and every change with its prediction. Newest rows at the bottom of each table. Times are UTC.
 
 **The Routine's prompt** (re-create it with this if the dev-ops coordinator's session is replaced): *Daily improvement review: follow claude/IMPROVEMENT.md in edsaperia/dev-ops (read it from main): check predictions due, write today's numbers, read the friction since the last review, act on at most two improvements, and report on Ed's questions page.*
 
