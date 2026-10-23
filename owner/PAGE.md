@@ -39,4 +39,4 @@ The facts of Ed's own setup that the kit's files refer to by path. The kit says 
 
 - A scheduled Routine, `trig_01UksMf3HSzyjeqkmzKd7JY2`, daily at **07:57 London time**, so the report is waiting when Ed starts. Ed asked for it (Ed, 2026-10-02).
 - It is bound to the dev-ops coordinator's session; its prompt is in the header of [`IMPROVEMENT-LOG.md`](IMPROVEMENT-LOG.md).
-- Its daily numbers include, for draft, GitHub plus the page; projects off the page (see [`projects.md`](projects.md)) are counted as merges only.
+- Its daily numbers come, for draft, from GitHub plus the page, and the coordinator's two gaps are measured on draft; projects off the page (see [`projects.md`](projects.md)) are counted as merges only.
