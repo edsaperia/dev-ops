@@ -13,6 +13,7 @@ jobs:
       issues: write
       id-token: write
       actions: read
+    # owner: a new owner points this at their own copy of dev-ops
     uses: edsaperia/dev-ops/.github/workflows/claude-builder.yml@main
     with:
       # per project: what the builder needs installed before it starts
