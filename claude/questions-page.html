@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Questions for Ed</title>
+<title>Questions</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Source+Serif+4:opsz,wght@8..60,600&family=JetBrains+Mono:wght@500&display=swap">
@@ -128,7 +128,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
 .empty p{color:var(--muted);margin:0;max-width:40ch}
 .empty.brief{padding:28px 20px 6px}
 
-/* what coordinators are waiting on, shown when nothing waits on Ed */
+/* what coordinators are waiting on, shown when nothing waits on the owner */
 .flight{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
 .flight li{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;border-left-width:4px}
 .flight li.late{border-left-color:var(--warn)}
@@ -164,7 +164,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
 .hist .hmeta{display:flex;gap:8px;align-items:center;font-size:.8rem;color:var(--faint)}
 .hist .hmeta time{margin-left:auto;font-variant-numeric:tabular-nums}
 .notice{color:var(--muted);text-align:center;padding:40px 12px}
-/* Waiting: every open item, each a full card answered where it stands (Ed, 2026-10-03) */
+/* Waiting: every open item, each a full card answered where it stands (2026-10-03) */
 .cards{display:flex;flex-direction:column;gap:16px}
 /* with many cards a button pinned to the screen's foot belongs to a card not yet in view: each sits in its own card */
 .cards .actions{position:static;margin:0;padding:0;background:none}
@@ -174,7 +174,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
 
 <div class="wrap">
   <header class="top">
-    <h1 id="title">Questions for Ed</h1>
+    <h1 id="title">Questions</h1>
     <nav class="seg" aria-label="View">
       <button id="tab-now" aria-pressed="true">Waiting <span id="n-open"></span></button>
       <button id="tab-hist" aria-pressed="false">History</button>
@@ -189,6 +189,12 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
 
 <script>
 (function(){
+  // The owner's settings (their values: owner/PAGE.md). A new owner sets these three before publishing
+  // the page as their own; nothing else in this file names the owner.
+  const OWNER = 'Ed';                                                    // shown as "Questions for <OWNER>"
+  const PAGE_URL = 'https://claude.ai/artifact/FoSoRQxMVh8cZocFpMP6KW';  // this page's own link
+  const RULES_REPO = 'edsaperia/dev-ops';                                // the dev-ops coordinators read rules from
+
   const main = document.getElementById('main');
   const tabNow = document.getElementById('tab-now');
   const tabHist = document.getElementById('tab-hist');
@@ -196,6 +202,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
   const wakeEl = document.getElementById('wake');
   const wakeText = document.getElementById('wake-text');
   const titleEl = document.getElementById('title');
+  document.title = titleEl.textContent = 'Questions for ' + OWNER;
 
   const S = {
     db: null, ready: false, failed: '',
@@ -251,7 +258,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     const o = Array.isArray(q.options) ? q.options.filter(x => x && x.key != null) : [];
     return o.filter(x => x.recommended).concat(o.filter(x => !x.recommended));
   };
-  // Text Ed must paste somewhere (a builder's brief, a setting) comes as buttons, never as a paragraph to select.
+  // Text the owner must paste somewhere (a builder's brief, a setting) comes as buttons, never as a paragraph to select.
   const copiesOf = q => (Array.isArray(q.copy) ? q.copy : [])
     .filter(c => c && typeof c.text === 'string' && c.text)
     .map(c => ({ label: String(c.label || ''), text: c.text, url: /^https:\/\//i.test(String(c.url || '')) ? String(c.url) : '' }));
@@ -263,7 +270,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
   // Mis-shaped: an open item the page cannot offer an answer for (an unknown kind, a question with no
   // options, no title). Returns the reason, or '' when the item is well formed.
   // Open: status "open", or no status at all and no answer yet (written without one, 2026-10-02:
-  // three draft items sat invisible); the missing status itself makes the item mis-shaped.
+  // three items sat invisible); the missing status itself makes the item mis-shaped.
   const isOpen = q => !!q && (q.status === 'open' || (q.status == null && !q.answer));
   function misShape(q){
     if (!isOpen(q)) return '';
@@ -275,7 +282,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     if (typeof q.title !== 'string') why.push('no title');
     return why.join(', ');
   }
-  // Its one tap: a report to the dev-ops coordinator, who repairs the item (Ed, 2026-10-01).
+  // Its one tap: a report to the dev-ops coordinator, who repairs the item (2026-10-01).
   function misReport(id, q){
     const url = S.coordinators['dev-ops'] || '';
     return {
@@ -341,10 +348,10 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
   // Each project's coordinator, with when it last did anything: shown whether or not the comments
   // feature loaded, since the platform only says whether some session is listening, never which.
   const seenEl = document.getElementById('seen');
-  // One row of project chips (Ed, 2026-10-03: a line per coordinator would only grow; then *you have chips
+  // One row of project chips (2026-10-03: a line per coordinator would only grow; then *you have chips
   // to filter and pills for this, maybe you can combine them*). Each chip is a project: its dot says how its
   // coordinator is (green: active in the last two hours; red, with its age: quiet longer; grey: parked, an
-  // open in-flight item <project>-parked or -asleep), its badge how many items wait on Ed. Projects with
+  // open in-flight item <project>-parked or -asleep), its badge how many items wait on the owner. Projects with
   // items come first, oldest item first; a tap on one filters Waiting to it, a second tap (or All) clears.
   const shortAgo = iso => { const m = Math.round((Date.now() - Date.parse(iso)) / 60000); return m < 1 ? 'now' : m < 60 ? m + 'm' : m < 1440 ? Math.round(m / 60) + 'h' : Math.round(m / 1440) + 'd'; };
   function waitingByProject(){
@@ -383,7 +390,6 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
 
   // Nobody listening: one tap copies the paste-in message and opens that project's
   // coordinator session (each coordinator records its own link in coordinators/<project>).
-  const PAGE_URL = 'https://claude.ai/artifact/FoSoRQxMVh8cZocFpMP6KW';
   const REARM_TEXT = 'Watch this page for wakes (dev-ops claude/QUESTIONS-PAGE.md): ' + PAGE_URL +
     ' — then confirm your watch shows connected with auto-replies armed.';
   const rearmEl = document.getElementById('rearm');
@@ -430,7 +436,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     const k = kindOf(q);
     const lines = [];
     const verb = k === 'question' ? 'answered' : k === 'task' ? 'marked done' : 'OKed';
-    lines.push('[questions page] Ed ' + verb + ' ' + id + ' (' + k + '): ' + (q.title || ''));
+    lines.push('[questions page] ' + OWNER + ' ' + verb + ' ' + id + ' (' + k + '): ' + (q.title || ''));
     if (k === 'question') {
       const byKey = new Map(optsOf(q).map(o => [String(o.key), o.label || o.key]));
       const picked = (answer.keys || []).map(key => key + ' — ' + (byKey.get(String(key)) || key));
@@ -443,7 +449,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     // the full answer is in the db either way
     return lines.map((l, i) => i < lines.length - 1 && l.length > 700 ? l.slice(0, 700) + '…' : l).join('\n');
   }
-  // Started inside the press, before any other await, so the send counts as Ed's own gesture.
+  // Started inside the press, before any other await, so the send counts as the owner's own gesture.
   async function wakeCoordinator(id, q, answer){
     if (!S.comments) return { ok: false, why: 'none' };
     if (S.canWake !== 'available') return { ok: false, why: S.canWake || 'off' };
@@ -577,7 +583,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     const opts = optsOf(q);
     const links = (Array.isArray(q.links) ? q.links : []).filter(l => safeUrl(l && l.url));
     const copies = copiesOf(q);
-    // A task Ed does elsewhere: the place to open is the action, so its first link is a big button
+    // A task the owner does elsewhere: the place to open is the action, so its first link is a big button
     // (unless a copy button is already the action), and the other links stay small.
     const openLink = kindOf(q) === 'task' && !copies.length && links.length ? links[0] : null;
     const smallLinks = openLink ? links.slice(1) : links;
@@ -655,7 +661,7 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
   // silence is attributed to a named coordinator, never asserted as a fact about the work.
   const STALE_MS = 2 * 3600e3;
   function quietCoordinators(flights){
-    // with an item open on this page it is waiting on Ed, not quiet, so it gets no nudge (Ed, 2026-10-03)
+    // with an item open on this page it is waiting on the owner, not quiet, so it gets no nudge (2026-10-03)
     const busy = new Set(flights.map(([, f]) => projectKey(f)).concat(openList().map(([, q]) => projectKey(q))));
     const known = new Set([...Object.keys(S.coordinators), ...Object.keys(S.lastActive)]);
     return [...known].filter(p => !busy.has(p)).sort();
@@ -678,11 +684,11 @@ textarea{width:100%;font:16px/1.45 var(--f-ui);color:var(--ink);background:var(-
     return {
       label: 'Copy nudge, open ' + p + ' coordinator',
       text: '[questions page] ' + p + ' has nothing in flight and its coordinator ' + (t ? 'was last active ' + ago(S.lastActive[p]) : 'has never recorded when it was last active') +
-        '. Read CONVENTIONS.md and claude/QUESTIONS-PAGE.md from edsaperia/dev-ops main, put whatever you are waiting on in flight, or ask what next on the page.',
+        '. Read CONVENTIONS.md and claude/QUESTIONS-PAGE.md from ' + RULES_REPO + ' main, put whatever you are waiting on in flight, or ask what next on the page.',
       url
     };
   }
-  // A copy that also goes somewhere is two big buttons, copy first, then open (Ed, 2026-10-02):
+  // A copy that also goes somewhere is two big buttons, copy first, then open (2026-10-02):
   // the label's ", open …" half names the second button.
   function splitLabel(label, hasUrl){
     const m = String(label || '').match(/^(.*?),\s*(open\b.*)$/i);
