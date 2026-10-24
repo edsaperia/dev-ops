@@ -33,6 +33,17 @@ Safety, by design of `anthropics/claude-code-action`: only people with write acc
 5. **Permission mode: Auto, for every session**, coordinator or builder. Pick it in the session's mode menu when you open the session, or change it while the session runs; a resumed session keeps its mode. Auto is the only thing that stops the one-off approval prompts (2026-09-30): the repo's `.claude/settings.json` (the standing permissions, dev-ops PR #11) is honoured only by a session on a single repository in the default mode, a session on two repositories reads no permission rules from it at all, and the *edit the data in "Questions for ‹owner›"* consent is not covered by allow rules in either mode. `.claude/settings.json` also carries `defaultMode: "auto"`, and it works: a new session on a repo whose settings file has that line opens in Auto without anyone choosing it (2026-09-30, on dev-ops). So this step is automatic on every repo whose settings file carries the line; choose the mode by hand only in a session opened before the line was merged, or on a repo without it.
 6. **The page-contract mod**: copy `.claude/skills/page-contract/` from dev-ops into the repo (in a repo where `main` deploys, by a Merge question like any other change), and make sure the environment's variables carry `CLAUDE_CODE_PLUGIN_DIRS` with that repo's path, as `claude/QUESTIONS-PAGE.md`, *The page-contract mod*, gives it, and `QUESTIONS_PAGE_IDS` and `QUESTIONS_RULES_REPO`, once per environment. The owner's values for all three are in [`owner/PAGE.md`](../owner/PAGE.md). Without `CLAUDE_CODE_PLUGIN_DIRS` a cloud session does not load the mod; without `QUESTIONS_PAGE_IDS` it loads and does nothing.
 
+## What a cloud session cannot do on GitHub
+
+A cloud session works through a GitHub proxy that lets it push only branches and open, comment on and merge pull requests in the repositories attached to it. These need the owner, on GitHub, so a coordinator asks for them as a task on the questions page (a large button to the page) and never promises them as its own step:
+
+- **delete a branch** (the API and `git push --delete` are both refused; 2026-10-22);
+- **push a tag** (refused; record versions in a file, or ask the owner to tag; 2026-10-23);
+- **invite a collaborator or change anyone's access** (2026-10-23);
+- **reach a repository the Claude GitHub app has not been given**, including one just created in an organisation that grants it selected repositories only (2026-10-23).
+
+Creating a repository through the GitHub connector has worked (2026-10-23) and may be tried first (C, step 1).
+
 ## C. Taking on a project: its coordinator, start to finish
 
 The order the dev-ops coordinator follows when the owner brings a project in, new or existing (2026-10-02). Each step names who does it; the owner's steps go on their questions page as tasks with a one-tap button.
