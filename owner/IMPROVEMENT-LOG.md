@@ -56,6 +56,7 @@ The record kept by the daily improvement review ([`claude/IMPROVEMENT.md`](../cl
 | 2026-10-24 06:59 | all | Campaign 101 (campaign-hub 79, showrunner 22), dev-ops 5, admit 2, ae 1, draft 0, Topic 0 (API); Witch 131 merges (git); nothing red | — | — | — | 0 | 2 answers on the page (Ed worked in Campaign's session) | 7 asked: dev-ops 1 / 1 / 0, draft 1 / 0 / 0, Topic 1 / 0 / 1, admit 0 / 2 / 0 | — | 0 | 0 |
 | 2026-10-25 07:59 | all | Campaign 30 (campaign-hub 16, showrunner 14), dev-ops 1, others 0 (API); Witch 25 merges (git); **15 runs on Campaign's main not started (CampaignLab Actions billing)** | — | — | — | 15 (Campaign; none ran) | 0 answers on the page | 0 asked | — | 0 | 0 |
 | 2026-10-26 08:00 | all | Topic 2, Campaign 2 (hub 1, showrunner 1), dev-ops 1, others 0 (API); Witch 106 merges (git); Campaign's main still not running (billing, day 2) | — | — | — | 2 (Campaign; not started) | 0 answers | 0 asked | — | 0 | 0 |
+| 2026-10-27 07:59 | all | Campaign 3 (showrunner), dev-ops 1, others 0 (API); Witch 132 merges (git); Campaign's Actions still not starting (billing, day 4) | — | — | — | 3 (Campaign; not started) | 0 answers | 0 asked | — | 0 | 0 |
 
 ## Friction
 
