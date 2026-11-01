@@ -8,24 +8,26 @@ Prints one JSON line and one verdict line; exit 0 = READY, 1 = NOT READY, 2 = th
   powershell -NoProfile -ExecutionPolicy Bypass -File tools\laptop-ready.ps1 -MinIdleMinutes 10 -CpuMax 60
   powershell -NoProfile -ExecutionPolicy Bypass -File tools\laptop-ready.ps1 -SelfTest
 
-READY needs all three: the owner idle for at least -MinIdleMinutes (last keyboard/mouse input), no browser processes
-at all (an open browser means the owner may be using it, and it competes for GPU and memory), and CPU at most -CpuMax.
+READY needs the owner idle for at least -MinIdleMinutes (last keyboard/mouse input; default 2). Open browsers and CPU
+are reported, and block only when asked (-BlockOnBrowser, -CpuMax): Ed, 2026-11-01, relaxed the gates after strict
+ones stopped runs he wasn't disturbing.
 Run it in the owner's own desktop session: idle time read from a service or another session is meaningless.
 #>
 param(
-  [double]$MinIdleMinutes = 5,
-  [int]$CpuMax = 70,
+  [double]$MinIdleMinutes = 2,
+  [switch]$BlockOnBrowser,
+  [int]$CpuMax = 100,
   [string[]]$Browsers = @('chrome', 'msedge', 'firefox', 'brave', 'opera', 'vivaldi'),
   [switch]$SelfTest
 )
 $ErrorActionPreference = 'Stop'
 $started = [Diagnostics.Stopwatch]::StartNew()
 
-function Get-LaptopVerdict([double]$IdleMs, [int]$BrowserCount, [int]$VisibleBrowsers, [double]$CpuPercent, [double]$MinIdleMinutes, [int]$CpuMax) {
+function Get-LaptopVerdict([double]$IdleMs, [int]$BrowserCount, [int]$VisibleBrowsers, [double]$CpuPercent, [double]$MinIdleMinutes, [int]$CpuMax, [bool]$BlockBrowsers = $true) {
   $reasons = @()
   if ($IdleMs -lt 0) { $reasons += 'idle time unavailable (not the owner''s desktop session?)' }
   elseif ($IdleMs -lt $MinIdleMinutes * 60000) { $reasons += ('owner active {0:N1} min ago (needs {1})' -f ($IdleMs / 60000), $MinIdleMinutes) }
-  if ($BrowserCount -gt 0) { $reasons += ('{0} browser process(es) open, {1} with a window' -f $BrowserCount, $VisibleBrowsers) }
+  if ($BlockBrowsers -and $BrowserCount -gt 0) { $reasons += ('{0} browser process(es) open, {1} with a window' -f $BrowserCount, $VisibleBrowsers) }
   if ($CpuPercent -gt $CpuMax) { $reasons += ('CPU {0:N0}% (max {1})' -f $CpuPercent, $CpuMax) }
   [pscustomobject]@{ ready = ($reasons.Count -eq 0); reasons = $reasons }
 }
@@ -37,7 +39,8 @@ if ($SelfTest) {
     @{ args = @(600000, 22, 1, 10, 5, 70); ready = $false },
     @{ args = @(600000, 0, 0, 95, 5, 70); ready = $false },
     @{ args = @(-1, 0, 0, 10, 5, 70); ready = $false },
-    @{ args = @(400000, 0, 0, 10, 10, 70); ready = $false }
+    @{ args = @(400000, 0, 0, 10, 10, 70); ready = $false },
+    @{ args = @(600000, 22, 1, 10, 5, 70, $false); ready = $true }
   )
   $failed = 0
   foreach ($c in $cases) {
@@ -78,7 +81,7 @@ public static class LaptopReadyIdle {
       try { if ($before.ContainsKey($p.Id)) { [pscustomobject]@{ name = $p.ProcessName; pct = [math]::Round(100 * ($p.TotalProcessorTime.TotalMilliseconds - $before[$p.Id]) / $elapsed, 1) } } } catch {}
     }) | Where-Object { $_.pct -gt 0 } | Sort-Object pct -Descending | Select-Object -First 3
 
-  $v = Get-LaptopVerdict $idleMs $open.Count $visible $cpu $MinIdleMinutes $CpuMax
+  $v = Get-LaptopVerdict $idleMs $open.Count $visible $cpu $MinIdleMinutes $CpuMax ([bool]$BlockOnBrowser)
   $report = [ordered]@{
     at = [DateTime]::UtcNow.ToString('o'); host = $env:COMPUTERNAME
     idleMs = $idleMs; browsers = $open.Count; visibleBrowsers = $visible; cpuPercent = $cpu; topCpu = @($top)
