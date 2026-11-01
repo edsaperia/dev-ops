@@ -16,6 +16,7 @@ The kit is written for any owner. Everything about one particular owner — who 
 - [`.github/workflows/claude-builder.yml`](.github/workflows/claude-builder.yml) — the shared builder workflow each project calls, from a copy of [`claude/project-stub.yml`](claude/project-stub.yml).
 - [`.claude/settings.json`](.claude/settings.json) — the standing permissions every project copies.
 - [`template/owner/`](template/owner/) — a blank `owner/` folder for a new owner.
+- [`tools/laptop-ready.ps1`](tools/laptop-ready.ps1) — a read-only, two-second check that the owner's Windows laptop is free for an unattended run: the owner idle, no browser open, CPU quiet. Prints READY or NOT READY with the reasons.
 
 ## The owner's folder
 
