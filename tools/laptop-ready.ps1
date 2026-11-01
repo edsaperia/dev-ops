@@ -1,7 +1,7 @@
 <#
 laptop-ready.ps1 — is the owner's Windows laptop free for an unattended run (a headless browser proof, a CPU job)?
 
-Read-only and fast (about 1.5 s): it never opens, attaches to, closes or reads another program, and starts nothing.
+Read-only and quick (typically 2–5 s; the first run in a session compiles a small idle-time reader): it never opens, attaches to, closes or reads another program, and starts nothing.
 Prints one JSON line and one verdict line; exit 0 = READY, 1 = NOT READY, 2 = the check itself failed.
 
   powershell -NoProfile -ExecutionPolicy Bypass -File tools\laptop-ready.ps1
@@ -19,6 +19,7 @@ param(
   [switch]$SelfTest
 )
 $ErrorActionPreference = 'Stop'
+$started = [Diagnostics.Stopwatch]::StartNew()
 
 function Get-LaptopVerdict([double]$IdleMs, [int]$BrowserCount, [int]$VisibleBrowsers, [double]$CpuPercent, [double]$MinIdleMinutes, [int]$CpuMax) {
   $reasons = @()
@@ -81,7 +82,7 @@ public static class LaptopReadyIdle {
   $report = [ordered]@{
     at = [DateTime]::UtcNow.ToString('o'); host = $env:COMPUTERNAME
     idleMs = $idleMs; browsers = $open.Count; visibleBrowsers = $visible; cpuPercent = $cpu; topCpu = @($top)
-    minIdleMinutes = $MinIdleMinutes; cpuMax = $CpuMax; ready = $v.ready; reasons = @($v.reasons)
+    minIdleMinutes = $MinIdleMinutes; cpuMax = $CpuMax; ready = $v.ready; reasons = @($v.reasons); elapsedMs = $started.ElapsedMilliseconds
   }
   Write-Output ($report | ConvertTo-Json -Compress -Depth 4)
   if ($v.ready) { Write-Output 'READY' } else { Write-Output ('NOT READY: ' + ($v.reasons -join '; ')) }
