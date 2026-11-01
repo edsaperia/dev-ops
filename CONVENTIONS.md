@@ -32,6 +32,18 @@ All agents may post as the owner's GitHub account; the prefix says who is speaki
 - **Re-run only for what `main` changed.** A PR that is behind `main` but merges cleanly is not brought up to date and re-run merely for being behind when everything `main` gained since its checks went green is documents: its *Merge* question is asked on the head as it stands, and CI's gates on the merge commit still run before any deploy. When `main` gained code, the PR merges `main` and re-runs its checks as before, the slower ones included where the change touches what they cover (2026-10-02).
 - **The deploy never queues behind PR checks.** GitHub runs only so many of the account's jobs at once, so in a repo whose `main` deploys from CI, the workflows keep that capacity for what matters. A new push to a PR cancels that PR's runs it makes stale (workflow-level `concurrency` keyed on the branch, `cancel-in-progress` for pull requests only, never for `main`). A slow suite run by hand or on merges, like a sprint tier, runs at most once per branch at a time. On a push to `main`, the deploying job starts first and the other checks wait for it (`needs`), while on a PR they still run side by side. Each project's coordinator applies this to its own workflows, by a *Merge* question (2026-10-02: a deploy waited 21 and 4 minutes behind PR runs on two of nine merges).
 
+## Reviewing CI delays
+
+Ed, 2026-11-01: the coordinator reviews CI on its first crossing above each
+10-minute threshold (10, 20, 30, and so on), including queue time. Track each
+threshold independently for comparable workloads. A triggered threshold rearms
+only after the review finds a cause, a correction is implemented, and a comparable
+completed run finishes below it. One review may cover several crossed bands;
+do not repeat unchanged alerts. Keep the evidence and review owner in durable
+project state. See [CI efficiency](CI-EFFICIENCY.md) for measurement, reset
+examples and reusable improvements. A CI or hardware wait blocks its named action,
+not all independent authorized coding or review.
+
 ## Briefing a builder
 
 - **Write the brief just before the build starts**, not days ahead: a plan right when written goes stale as other work lands (a week was once lost to such plans).
