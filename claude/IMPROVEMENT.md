@@ -31,6 +31,12 @@ A subagent (Opus) may gather the numbers; the coordinator checks them before the
 
 ## 3. The review, daily
 
+CI threshold crossings also trigger a review when observed, without waiting for
+the daily review. Follow [CI efficiency](../CI-EFFICIENCY.md): each 10-minute
+threshold resets only after a cause is corrected and comparable completed CI
+finishes below it. The daily review checks open reviews, reset evidence and
+predictions; it does not create duplicate reviews for unchanged crossings.
+
 1. **Check predictions due.** Each row of the *Changes* table whose check date has come: compare the numbers with the prediction and write the result. *Holds*: keep it. *Missed*: find out why and either fix it or propose undoing it. A change is never left unexamined.
 2. **Write today's numbers** and compare them with the last few rows. Close or re-promise any of dev-ops's own in-flight items whose work has moved on. Then list every item open on the owner's page for over 48 hours and every overdue in-flight item: ask the coordinator that posted each once to confirm it is current or withdraw it (an item its coordinator confirmed is not asked again for a week, or, when that coordinator says it waits on the owner doing something off-screen that takes weeks, such as paperwork, not until the item changes; confirming is a reply, never a write to the item, 2026-10-22), and name the confirmed ones in the report, so the owner sees what they are holding (2026-10-06, C16).
 3. **Read the friction log since the last review.** Group it by cause; a cause seen twice is a candidate.

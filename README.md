@@ -12,6 +12,7 @@ The kit is written for any owner. Everything about one particular owner — who 
 - [`claude/questions-page.html`](claude/questions-page.html) — the page itself, published as each owner's own claude.ai artifact.
 - [`.claude/skills/page-contract/`](.claude/skills/page-contract/) — a Claude Code mod that holds every write to the page to its contract and stamps coordinators' activity.
 - [`claude/IMPROVEMENT.md`](claude/IMPROVEMENT.md) — the daily improvement review.
+- [`CI-EFFICIENCY.md`](CI-EFFICIENCY.md) — CI threshold reviews, reset evidence and reusable lessons from Witch's speedups.
 - [`claude/SETUP.md`](claude/SETUP.md) — wiring a project for Claude builders on GitHub Actions (`@claude`) and in cloud sessions, and taking on a project.
 - [`.github/workflows/claude-builder.yml`](.github/workflows/claude-builder.yml) — the shared builder workflow each project calls, from a copy of [`claude/project-stub.yml`](claude/project-stub.yml).
 - [`.claude/settings.json`](.claude/settings.json) — the standing permissions every project copies.
