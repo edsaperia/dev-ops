@@ -65,6 +65,7 @@ The record kept by the daily improvement review ([`claude/IMPROVEMENT.md`](../cl
 | 2026-11-02 08:05 | all | Campaign 2 (hub), dev-ops 1, others 0 (API); Witch 52 merges (git); **CampaignLab's Actions running again since 11-01 09:08Z** (both main runs green) | — | — | — | 0 | 0 answers (10 days) | 0 asked | — | 0 | 0 |
 | 2026-11-03 07:59 | all | Campaign 25 (hub 13, showrunner 12), dev-ops 1, others 0 (API); Witch 58 merges (git); nothing red (showrunner: 4 superseded cancels) | — | — | — | 0 | 0 answers on the page (11 days; Ed asked dev-ops in chat to change the workflow) | 0 asked | — | 0 | 0 |
 | 2026-11-04 07:59 | all | Witch 74 merges (git), Campaign 1 (showrunner), dev-ops 2, others 0 (API); nothing red | — | — | — | 0 | 0 answers on the page (12 days) | 0 asked; weekly confirmation of long waits sent to admit (41 items), draft (2), Topic (2); ae's visa tasks wait on paperwork, so they were not asked | — | 1 (dev-ops' own review item, not re-promised on 11-03) | 0 |
+| 2026-11-05 07:58 | all | Witch 93 merges (git), dev-ops 1, others 0 (API); nothing red | — | — | — | 0 | 0 answers on the page (13 days) | 0 asked; long waits confirmed by admit (41) and Topic (2); draft sent no reply, but its session status reads "#229 unchanged, awaiting your merge" | — | 0 | 0 |
 
 ## Friction
 
@@ -156,6 +157,7 @@ The record kept by the daily improvement review ([`claude/IMPROVEMENT.md`](../cl
 | 2026-11-02 | Ed: "I'm finding q less useful because I'm working on fewer projects at a time but more intensively" | The page's 49 open items go unread; asks that matter wait days (none answered for 11 days) | The page was built for many projects at once, each asking a little; Ed now works in one or two project sessions at a time | Four changes put to Ed in the dev-ops session (Active/Background modes, asks-only page, parking projects that wait on him over a week, a short morning digest); awaiting his choice |
 | 2026-11-03 | Dev-ops's own: the 11-02 review card listed Topic's Merge #391 and draft's #228 as waiting on Ed; #391 had merged 10-31 | A wrong line on Ed's page for a day | The waiting list was carried over from the previous card, not re-read from GitHub and the page | Corrected on the card; the review re-reads each named PR's state before listing it |
 | 2026-11-04 | Dev-ops's own: the 11-03 review did not re-promise its own in-flight item, so it showed overdue for a day; and today's re-promise was first written with a rounded-up time, which the page guard refused (a good catch) | One overdue line on Ed's page; one rewrite | Step 2's re-promise was skipped on a quiet day | Re-promised; on quiet days the review still updates its in-flight item |
+| 2026-11-05 | Draft did not answer the weekly long-wait check in 24 h (admit and Topic answered within 2 min); the second time draft has not replied to a dev-ops ask (its 10-22 review input never came) | A guess from its session status instead of a reply | Unknown; draft's session is near its context limit (746k of 1M) and runs its own daily check-in | Read from its status; if it recurs, ask draft directly why the pokes go unanswered |
 
 ## Changes
 
