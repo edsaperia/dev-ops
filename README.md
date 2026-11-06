@@ -26,13 +26,13 @@ The kit is written for any owner. Everything about one particular owner — who 
 - [`owner/REGISTER.md`](owner/REGISTER.md) — dev-ops work left undone, with conditions to act.
 - [`owner/IMPROVEMENT-LOG.md`](owner/IMPROVEMENT-LOG.md) — the improvement review's numbers, friction and changes.
 
-`projects.md`, `claude/REGISTER.md`, `claude/IMPROVEMENT-LOG.md`, `local/windows.md` and `q/index.html` are stubs left where those files used to be (2026-10-23).
+`q/index.html` forwards an old link to the owner's questions page, so it stays at the root (2026-10-23).
 
 ## Setting up for yourself
 
 Instructions for an agent setting this copy of dev-ops up for a new owner, in their own fork or copy of the repository. Do them in order, and ask the new owner for anything only they know.
 
-1. **Delete `owner/` entirely**, and the stubs at the old paths: `projects.md`, `claude/REGISTER.md`, `claude/IMPROVEMENT-LOG.md`, `local/windows.md` and `q/index.html` (or re-point `q/index.html` at the new owner's page if they want a forwarding link). Nothing of the previous owner's should remain.
+1. **Delete `owner/` entirely**, and `q/index.html` (or re-point it at the new owner's page if they want a forwarding link). Nothing of the previous owner's should remain.
 2. **Copy [`template/owner/`](template/owner/) to `owner/`** and fill it in with the new owner: their name and how they like to work in `PROFILE.md` (go through its suggestions with them), and an empty `projects.md`, `REGISTER.md` and `IMPROVEMENT-LOG.md` ready for rows.
 3. **Publish their own questions page** from [`claude/questions-page.html`](claude/questions-page.html): set `OWNER` (their name) and `RULES_REPO` (their copy of dev-ops) at the top of its script, publish it with the Artifact tool and the capabilities [`claude/QUESTIONS-PAGE.md`](claude/QUESTIONS-PAGE.md) gives, then set `PAGE_URL` to the link it got, republish, and record the link and the artifact's id in `owner/PAGE.md`.
 4. **Set the environment variables** in each cloud environment the owner's sessions use, and record them in `owner/PAGE.md`: `QUESTIONS_PAGE_IDS` (`<the page link's id>,<the artifact's uuid>`; without it the page-contract mod does nothing), `QUESTIONS_RULES_REPO` (`<their account>/dev-ops`), and `CLAUDE_CODE_PLUGIN_DIRS` (dev-ops' copy of the mod first, then each project's; [`claude/SETUP.md`](claude/SETUP.md) B6).

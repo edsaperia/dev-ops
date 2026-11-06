@@ -66,6 +66,7 @@ The record kept by the daily improvement review ([`claude/IMPROVEMENT.md`](../cl
 | 2026-11-03 07:59 | all | Campaign 25 (hub 13, showrunner 12), dev-ops 1, others 0 (API); Witch 58 merges (git); nothing red (showrunner: 4 superseded cancels) | — | — | — | 0 | 0 answers on the page (11 days; Ed asked dev-ops in chat to change the workflow) | 0 asked | — | 0 | 0 |
 | 2026-11-04 07:59 | all | Witch 74 merges (git), Campaign 1 (showrunner), dev-ops 2, others 0 (API); nothing red | — | — | — | 0 | 0 answers on the page (12 days) | 0 asked; weekly confirmation of long waits sent to admit (41 items), draft (2), Topic (2); ae's visa tasks wait on paperwork, so they were not asked | — | 1 (dev-ops' own review item, not re-promised on 11-03) | 0 |
 | 2026-11-05 07:58 | all | Witch 93 merges (git), dev-ops 1, others 0 (API); nothing red | — | — | — | 0 | 0 answers on the page (13 days) | 0 asked; long waits confirmed by admit (41) and Topic (2); draft sent no reply, but its session status reads "#229 unchanged, awaiting your merge" | — | 0 | 0 |
+| 2026-11-06 07:58 | all | Witch 13 merges (git), dev-ops 1, others 0 (API); nothing red | — | — | — | 0 | 0 answers on the page (14 days) | 0 asked; the four moved-file stubs removed per the register | — | 0 | 0 |
 
 ## Friction
 
