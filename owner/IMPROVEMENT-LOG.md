@@ -68,6 +68,7 @@ The record kept by the daily improvement review ([`claude/IMPROVEMENT.md`](../cl
 | 2026-11-05 07:58 | all | Witch 93 merges (git), dev-ops 1, others 0 (API); nothing red | — | — | — | 0 | 0 answers on the page (13 days) | 0 asked; long waits confirmed by admit (41) and Topic (2); draft sent no reply, but its session status reads "#229 unchanged, awaiting your merge" | — | 0 | 0 |
 | 2026-11-06 07:58 | all | Witch 13 merges (git), dev-ops 1, others 0 (API); nothing red | — | — | — | 0 | 0 answers on the page (14 days) | 0 asked; the four moved-file stubs removed per the register | — | 0 | 0 |
 | 2026-11-07 07:58 | all | Witch 18 merges (git), dev-ops 1, others 0 (API); nothing red | — | — | — | 0 | 0 answers on the page (15 days) | 0 asked | — | 0 | 0 |
+| 2026-11-08 07:58 | all | Witch 20 merges (git), dev-ops 1, others 0 (API); nothing red | — | — | — | 0 | 0 answers on the page (16 days) | 0 asked | — | 0 | 0 |
 
 ## Friction
 
