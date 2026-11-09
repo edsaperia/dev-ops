@@ -10,7 +10,7 @@ Whenever something costs time or quality, the dev-ops coordinator appends one li
 
 ## 2. The daily numbers
 
-Measured for the 24 hours to the review, per project with work that day (from GitHub and the page; the owner's particulars are in `owner/PAGE.md`), except that a project the owner runs directly, off the page, is counted as merges only (2026-10-12, C19), and written as one row of the log's *Numbers* table:
+Measured for the 24 hours to the review, per project with work that day (from GitHub and the page; the owner's particulars are in `owner/PAGE.md`), except that a project the owner runs directly, off the page, is counted as merges only (2026-10-12, C19), and written as one row of the log's *Numbers* table. On a quiet day (no merges on the page's projects, nothing red, no answer from the owner, no friction, no change made) no row and no pull request is written that day; the card on the owner's page carries the day's numbers, and the next row written covers the quiet days since the last one (2026-11-09, C23):
 
 | Number | How | Why |
 |---|---|---|
