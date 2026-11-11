@@ -70,6 +70,7 @@ The record kept by the daily improvement review ([`claude/IMPROVEMENT.md`](../cl
 | 2026-11-07 07:58 | all | Witch 18 merges (git), dev-ops 1, others 0 (API); nothing red | — | — | — | 0 | 0 answers on the page (15 days) | 0 asked | — | 0 | 0 |
 | 2026-11-08 07:58 | all | Witch 20 merges (git), dev-ops 1, others 0 (API); nothing red | — | — | — | 0 | 0 answers on the page (16 days) | 0 asked | — | 0 | 0 |
 | 2026-11-09 07:58 | all | Witch 3 merges (git), dev-ops 1, others 0 (API); nothing red. Week to 11-09: Witch 279, Campaign 26 (hub 13, showrunner 13), dev-ops 8, draft, Topic, admit and ae 0 | — | — | — | 0 | 0 answers on the page (17 days) | 0 asked | — | 0 | 0 |
+| 2026-11-11 07:58 (covers 11-10, quiet) | all | 11-10: Witch 19 (git), dev-ops 2. 11-11: Campaign 7 (hub 6, showrunner 1), Topic 2 (#394, #395; production deployed by Ed 11-10 13:48), Witch 4 (git); nothing red | — | — | — | 0 | 0 answers on the page (19 days); Ed worked in Topic's session | 1 asked (Topic, an update); weekly confirmation of long waits sent to admit, draft and Topic | — | 0 | 0 |
 
 ## Friction
 
