@@ -76,6 +76,7 @@ The record kept by the daily improvement review ([`claude/IMPROVEMENT.md`](../cl
 | 2026-11-14 07:58 | all | Campaign 4 (hub 1, showrunner 3), dev-ops 1, Witch 81 (git), others 0 (API); **CampaignLab's Actions still blocked by billing (day 3)** | — | — | — | 3 (showrunner main, not started: billing) | 0 answers on the page (22 days) | 0 asked | — | 0 | 0 |
 | 2026-11-15 07:58 | all | Campaign 1 (hub), dev-ops 1, Witch 5 (git), others 0 (API); **CampaignLab's Actions still blocked by billing (day 4)** | — | — | — | 0 on main today (no push runs) | 0 answers on the page (23 days) | 0 asked | — | 0 | 0 |
 | 2026-11-16 07:58 | all | Campaign 1 (hub), dev-ops 1, Witch 18 (git), others 0 (API); **CampaignLab's Actions still blocked by billing (day 5)**. Week to 11-16: Witch 184, Campaign 41 (hub 31, showrunner 10), dev-ops 7, Topic 2, admit 1, draft and ae 0 | — | — | — | 0 on main today | 0 answers on the page (24 days) | 0 asked | — | 0 | 0 |
+| 2026-11-17 07:58 | all | Campaign 3 (hub 2, showrunner 1), dev-ops 1, Witch 9 (git), others 0 (API); **CampaignLab's Actions still blocked by billing (day 6)** | — | — | — | 3 (Campaign main, not started: billing) | 0 answers on the page (25 days) | 0 asked | — | 0 | 0 |
 
 ## Friction
 
