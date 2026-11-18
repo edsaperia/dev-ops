@@ -40,6 +40,17 @@ All agents may post as the owner's GitHub account; the prefix says who is speaki
 - **One piece of work per brief**; an unrelated fix found on the way is its own PR (nine steps in one session cost $214 and stalled; a one-line brief cost $2.39).
 - **A subagent builder in a cloud session gets its worktree by hand.** Starting a subagent with `isolation: "worktree"` in a cloud session leaves it unable to run any command ("working-directory isolation context … was lost"), so it does nothing. Brief it to `git worktree add` into the scratchpad itself and work there (2026-10-02: one builder start lost).
 
+## Tests that tell the truth
+
+Agents optimise for a green check, and some ways of getting one pass CI without being true (the owner, 2026-11-18, after reading [interfere-inc/landmines](https://github.com/interfere-inc/landmines)). A builder never does these to get green, and a coordinator reviewing a FINAL sends back a diff that does:
+
+- **No retries and no raised timeouts on a test.** A test that passes on a re-run is a flaky test to fix, not a pass. A CI *job's* time limit raised because GitHub's machines are slow is different: it changes nothing a test checks, and is asked for as any other change.
+- **No fixed sleeps in a test.** Await the operation itself, or an event it emits; never a delay that usually wins the race.
+- **No stand-in for the thing under test.** Fakes are for what the project does not own (the network, the clock, a paid API), and a network call nothing expected fails the test instead of reaching the network.
+- **No quiet weakening.** A deleted assertion, a loosened expected value, a skipped case or a lowered threshold is named in the FINAL as such, with the reason, so the owner can see a check got easier.
+
+Where a project's linter can enforce one of these, a lint rule whose message says what to do instead beats a sentence here; existing cases go on a per-file allowlist with exact counts, so the list only shrinks.
+
 ## Reviewing a FINAL
 
 - **A red check whose failure names nothing the diff touches gets one re-run before it is treated as a defect**; a second red on the same commit is real, and is never re-run again. A builder that disputes a red with measurements may be right (2026-08-27 and 08-29: reds from machine load, green on a plain re-run).
