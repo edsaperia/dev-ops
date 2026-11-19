@@ -46,10 +46,27 @@ Agents optimise for a green check, and some ways of getting one pass CI without 
 
 - **No retries and no raised timeouts on a test.** A test that passes on a re-run is a flaky test to fix, not a pass. A CI *job's* time limit raised because GitHub's machines are slow is different: it changes nothing a test checks, and is asked for as any other change.
 - **No fixed sleeps in a test.** Await the operation itself, or an event it emits; never a delay that usually wins the race.
-- **No stand-in for the thing under test.** Fakes are for what the project does not own (the network, the clock, a paid API), and a network call nothing expected fails the test instead of reaching the network.
-- **No quiet weakening.** A deleted assertion, a loosened expected value, a skipped case or a lowered threshold is named in the FINAL as such, with the reason, so the owner can see a check got easier.
+- **No stand-in for the thing under test.** Fakes are for what the project does not own (the network, the clock, a paid API, email), and a network call nothing expected fails the test instead of reaching the network. The project's own wrapper round the network (an API client) may be faked in tests of the code that uses it, never in tests of the wrapper itself. A fake behaves as the real thing does in whatever the test checks: a safety test once passed through a fake that skipped the very step that leaked (Campaign, 2026-11).
+- **No quiet weakening.** A deleted assertion, a loosened expected value, a skipped case or a lowered threshold is named in the FINAL as such, with the reason, so the owner can see a check got easier. A leniency a project wants on purpose is written into its rules, where everyone can see it.
+- **A test for a fix is seen failing first.** It fails on the old code and passes on the new, and both results are in the PR; the reviewer may undo the fix locally to watch it fail (Topic #394, Campaign run-builder #133). A test never seen red proves nothing.
+- **Expected values are written by hand,** never read from the files or data the code itself reads, or the test can no longer catch a missing or stray entry (Campaign).
+- **A deliberately broken example fails for the reason it is named for,** not at an earlier check that stops the rule under test from running (Campaign).
+- **A check that ran nothing has not passed.** No result, or zero cases run, is a refusal, never a pass (Campaign: approvals merged on a "0 failures" check that had run nothing).
+- **A suite skipped locally names the CI job that runs it,** and "all passed" in a FINAL says which suites ran (Topic: six real-database tests were quietly missing from a builder's "all passed").
 
 Where a project's linter can enforce one of these, a lint rule whose message says what to do instead beats a sentence here; existing cases go on a per-file allowlist with exact counts, so the list only shrinks.
+
+## Done means seen working
+
+Green checks are where verifying starts, not where it ends (the coordinators' answers to the owner's question, 2026-11-18):
+
+- **Check *done* against what a user sees, not against what was sent.** After a release, read production's error log for new errors before calling it done; Topic's Notifications page crashed on every visit for two weeks behind green CI and a green deploy, and the log is what showed it. An item counts as created once it shows where the public sees it (admit: the site's public events feed, which also shows duplicates).
+- **Say what could not be verified, in the same message.** A step sent untested, a page nobody has loaded since the deploy, a log that cannot be read: say so, rather than *verified*.
+- **A refusal or a rate limit is reported, never worked round,** with what it left unchecked (admit: four events left unverified and named, after a rate limit, rather than a disguised retry).
+- **An undocumented mechanism is proved once with a throwaway test** before anything relies on it (admit).
+- **When a whole class of bug gets past every check, add a test for the class,** not just the instance (Topic: a test that fails on any server file calling into a client-only module).
+- **"Passes locally, fails deployed" goes in the project's gotchas** with the safe alternative, the first time it happens (Topic).
+- **With CI down, a merge is checked by hand:** the project's own checks run on the PR merged with current `main` (not the PR head alone), their counts quoted in the merge message, and the PR marked *run locally*; a re-run is owed once CI is back (Campaign, during CampaignLab's billing blocks).
 
 ## Reviewing a FINAL
 
